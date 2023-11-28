@@ -82,7 +82,8 @@ void exposeClasses(py::module m)
         ;
 }
 
-void exposeFunctions(py::module m) {
+void exposeFunctions(py::module m)
+{
 
     // Creation of a SurfaceMesh from blender data, i.e. the input interface
     m.def("create_surface_mesh_from_blender_data", &createSurfaceMeshFromBlenderData,
@@ -99,9 +100,14 @@ void exposeFunctions(py::module m) {
 
     // Refine the mesh
     m.def("refine", &refine);
+
+    m.def("smooth", &smooth);
+
+    m.def("coarse", &coarse);
 }
 
-PYBIND11_MODULE(gmesh, m) {
+PYBIND11_MODULE(gmesh, m)
+{
     m.doc() = "Python bindings for the GMesh (gmesh) optimization library";
 
     py::enum_<Base::Value>(m, "Value")

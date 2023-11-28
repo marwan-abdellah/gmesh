@@ -1,6 +1,9 @@
 #pragma once
 
 #include "SurfaceMesh.hpp"
+#include "Normal.hpp"
+#include "EigenValue.hh"
+#include "EigenVector.hpp"
 #include "BMesh.hpp"
 
 /**
@@ -87,8 +90,184 @@ void scaleMesh(SurfaceMesh* surfaceMesh, const float& xScale, const float& yScal
  */
 void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor);
 
+
+
+
+
+
+
+
+
+/**
+ * @brief getEigenVector
+ * @param surfaceMesh
+ * @param vertexIndex
+ * @param eigenValue
+ * @param maxAngle
+ * @return
+ */
+EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
+                         const size_t& vertexIndex, EigenValue* eigenValue,
+                         float *maxAngle);
+
+
+
+Vertex getVertexPositionAlongSurface(const float& x, const float& y, const float& z,
+                                     const size_t& a, const size_t& b, const size_t& c,
+                                     SurfaceMesh *surfaceMesh);
+
+float getAngleBetweenVertices(SurfaceMesh *surfaceMesh,
+                              const size_t& a, const size_t& b, const size_t& c);
+
+
+/**
+ * @brief computeDotProduct
+ * @param surfaceMesh
+ * @param a
+ * @param b
+ * @param c
+ * @return
+ */
+float computeDotProduct(SurfaceMesh *surfaceMesh,
+                        const size_t& a, const size_t& b, const size_t& c);
+
+/**
+ * @brief computeCrossProduct
+ * @param surfaceMesh
+ * @param a
+ * @param b
+ * @param c
+ * @return
+ */
+Normal computeCrossProduct(SurfaceMesh *surfaceMesh,
+                           const size_t& a, const size_t& b, const size_t& c);
+
+/**
+ * @brief rotate
+ * @param sx
+ * @param sy
+ * @param sz
+ * @param theta
+ * @param phi
+ * @param angle
+ * @return
+ */
+Normal rotate(const float& sx, const float& sy, const float& sz,
+              const float& theta, const float& phi, const float& angle);
+
+/**
+ * @brief checkFlipAction
+ * @param surfaceMesh
+ * @param a
+ * @param b
+ * @param c
+ * @param d
+ * @param preserveRidges
+ * @return
+ */
+char checkFlipAction(SurfaceMesh *surfaceMesh,
+                     const size_t& a, const size_t& b, const size_t& c, const size_t& d,
+                     const bool& preserveRidges);
+
+/**
+ * @brief getMinMaxAngles
+ * @param surfaceMesh
+ * @param minangle
+ * @param maxangle
+ * @param num_small
+ * @param num_large
+ * @param max_min_angle
+ * @param min_max_angle
+ */
+void getMinMaxAngles(SurfaceMesh *surfaceMesh, float *minangle,
+                     float *maxangle, size_t *num_small, size_t *num_large,
+                     const float &max_min_angle, const float &min_max_angle);
+
+/**
+ * @brief edgeFlipping
+ * @param surfaceMesh
+ * @param n
+ * @param preserveRidges
+ */
+void edgeFlipping(SurfaceMesh *surfaceMesh,
+                  const size_t& n, const bool& preserveRidges);
+
+/**
+ * @brief moveVerticesAlongSurface
+ * @param surfaceMesh
+ * @param n
+ */
+void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n);
+
+
+
+
+
+
+void subdividePolygon(SurfaceMesh *surfaceMesh,
+                        NPNT3 *start_ngr, int *face_available_list,
+                        int *face_available_index, int face_marker);
+
+
+/**
+ * @brief smoothNormal
+ * @param surfaceMesh
+ * @param n
+ */
+void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n);
+
+
+
 /**
  * @brief refine
  * @param surfaceMesh
  */
 void refine(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief smooth
+ * @param surfaceMesh
+ * @param maxMinAngle
+ * @param minaMaxAngle
+ * @param maximumIterations
+ * @param preserveRidges
+ * @return
+ */
+bool smooth(SurfaceMesh *surfaceMesh,
+            const size_t& maxMinAngle,
+            const size_t& minaMaxAngle,
+            const size_t& maximumIterations,
+            const bool& preserveRidges);
+
+/**
+ * @brief smoothNormals
+ * @param surfaceMesh
+ * @param minAngle
+ * @param maxAngle
+ * @param numberSmallerAngles
+ * @param numberGreaterAngles
+ * @param maxMinAngle
+ * @param minMaxAngle
+ * @param verbose
+ */
+void smoothNormals(SurfaceMesh *surfaceMesh,
+                   float& minAngle, float& maxAngle,
+                   size_t &numberSmallerAngles, size_t &numberGreaterAngles,
+                   const float& maxMinAngle = 15,
+                   const float& minMaxAngle = 150,
+                   const bool& verbose = false);
+
+/**
+ * @brief coarse
+ * @param surfaceMesh
+ * @param coarsenessRate
+ * @param flatnessRate
+ * @param densenessWeight
+ * @param maxNormalAngle
+ * @param verbose
+ * @return
+ */
+char coarse(SurfaceMesh* surfaceMesh,
+            float coarsenessRate, float flatnessRate, float densenessWeight,
+            float maxNormalAngle,
+            const bool& verbose = false);
