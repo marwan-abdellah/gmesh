@@ -21,6 +21,49 @@ SurfaceMesh* createSurfaceMeshFromBlenderData(const BVertices& vertices,
                                               const BTriangles& triangles);
 
 /**
+ * @brief releaseSurfaceMeshData
+ * @param surfaceMesh
+ */
+void releaseSurfaceMeshData(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief destructSurfaceMesh
+ * @param surfaceMesh
+ */
+void destructSurfaceMesh(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief createNeighborlist
+ * @param surfaceMesh
+ */
+void createNeighborlist(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief destroyNeighborlist
+ * @param surfaceMesh
+ */
+void destroyNeighborlist(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief removeUnconnectedVertices
+ * @param surfaceMesh
+ */
+void removeUnconnectedVertices(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief deleteVertices
+ * @param surfaceMesh
+ */
+void deleteVertices(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief deleteFaces
+ * @param surfaceMesh
+ */
+void deleteFaces(SurfaceMesh* surfaceMesh);
+
+
+/**
  * @brief scaleMeshUniformly
  * @param surfaceMesh
  * @param scaleFactor

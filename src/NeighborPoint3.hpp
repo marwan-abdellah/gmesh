@@ -41,3 +41,8 @@ public:
  */
 typedef NeighborPoint3* NeighborPoint3Ptr;
 
+/**
+ * @brief NPNT3 UNTIL FURTHER NOTICE
+ */
+typedef NeighborPoint3 NPNT3;
+
