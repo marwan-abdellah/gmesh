@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.1...3.27)
 # This is your project statement. You should always list languages;
 # Listing the version is nice here since it sets lots of useful variables
 project(
-  ModernCMakeExample
+  gmesh
   VERSION 1.0
   LANGUAGES CXX)
 
@@ -26,14 +26,23 @@ project(
 # Other common choices are STATIC, SHARED, and MODULE
 # Including header files here helps IDEs but is not required.
 # Output libname matches target name, with the usual extensions on your system
-add_library(MyLibExample simple_lib.cpp simple_lib.hpp)
+add_library(gmesh
+    src/simple_lib.cpp
+    src/simple_lib.hpp
+    src/Vertex.hh
+    src/Triangle.hh
+    src/EigenVector.hh
+    src/Neighbour.hh
+    src/SurfaceMesh.cc
+    src/SurfaceMesh.hh)
 
 # Link each target with other targets or add options, etc.
 
 # Adding something we can run - Output name matches target name
-add_executable(MyExample simple_example.cpp)
+add_executable(gmesh_example
+    example/simple_example.cpp)
 
 # Make sure you link your targets with this command. It can also link libraries and
 # even flags, so linking a target that does not exist will not give a configure-time error.
-target_link_libraries(MyExample PRIVATE MyLibExample)
+target_link_libraries(gmesh_example PRIVATE gmesh)
 
