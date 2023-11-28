@@ -29,12 +29,13 @@ project(
 add_library(gmesh
     src/simple_lib.cpp
     src/simple_lib.hpp
-    src/Vertex.hh
-    src/Triangle.hh
-    src/EigenVector.hh
-    src/Neighbour.hh
+    src/Vertex.hpp
+    src/Triangle.hpp
+    src/EigenVector.hpp
+    src/Neighbour.hpp
     src/SurfaceMesh.cc
-    src/SurfaceMesh.hh)
+    src/SurfaceMesh.hh
+    src/SurfaceMesh.hpp)
 
 # Link each target with other targets or add options, etc.
 

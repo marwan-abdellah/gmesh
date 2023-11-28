@@ -1,11 +1,7 @@
-#include "SurfaceMesh.hh"
+#include "SurfaceMesh.hpp"
+#include "BMesh.hpp"
 
-/**
- * @brief createSurfaceMesh (SurfaceMesh_ctor)
- * @param numberVertices
- * @param numberFaces
- * @return
- */
+// SurfaceMesh_ctor
 SurfaceMesh* createSurfaceMesh(const size_t& numberVertices, const size_t& numberFaces)
 {
     // Allocation
@@ -56,5 +52,35 @@ SurfaceMesh* createSurfaceMesh(const size_t& numberVertices, const size_t& numbe
     surfaceMesh->useVolumeConstraint = false;
     surfaceMesh->asHole = false;
 
+    return surfaceMesh;
+}
+
+SurfaceMesh* createSurfaceMeshFromBlenderData(const BVertices& vertices,
+                                              const BTriangles& triangles)
+{
+    // Allocate and initialize the surface mesh
+    SurfaceMesh* surfaceMesh = createSurfaceMesh(vertices.size(), triangles.size());
+
+    // Fill the vertices
+#pragma omp parallel for
+    for (size_t i = 0; i < vertices.size(); ++i)
+    {
+        auto vertex = vertices[i];
+        surfaceMesh->vertex[i].x = vertex[0];
+        surfaceMesh->vertex[i].y = vertex[1];
+        surfaceMesh->vertex[i].z = vertex[2];
+    }
+
+    // Fill the faces
+#pragma omp parallel for
+    for (size_t i = 0; i < triangles.size(); ++i)
+    {
+        auto triangle = triangles[i];
+        surfaceMesh->face[i].v1 = triangle[0];
+        surfaceMesh->face[i].v2 = triangle[1];
+        surfaceMesh->face[i].v3 = triangle[2];
+    }
+
+    // Return the created surface mesh
     return surfaceMesh;
 }
