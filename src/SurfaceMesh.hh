@@ -200,10 +200,6 @@ void edgeFlipping(SurfaceMesh *surfaceMesh,
 void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n);
 
 
-
-
-
-
 void subdividePolygon(SurfaceMesh *surfaceMesh,
                         NPNT3 *start_ngr, int *face_available_list,
                         int *face_available_index, int face_marker);

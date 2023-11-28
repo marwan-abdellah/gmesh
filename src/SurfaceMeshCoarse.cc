@@ -11,6 +11,8 @@ char coarse(SurfaceMesh* surfaceMesh,
             float maxNormalAngle,
             const bool &verbose)
 {
+
+
     int m, n, a0, b0;
     int a, b, c, face_marker;
     float x, y, z;
