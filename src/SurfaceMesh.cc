@@ -84,3 +84,15 @@ SurfaceMesh* createSurfaceMeshFromBlenderData(const BVertices& vertices,
     // Return the created surface mesh
     return surfaceMesh;
 }
+
+void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor)
+{
+    // Fill the vertices
+#pragma omp parallel for
+    for (size_t i = 0; i < surfaceMesh->numberVertices; ++i)
+    {
+        surfaceMesh->vertex[i].x *= scaleFactor;
+        surfaceMesh->vertex[i].y *= scaleFactor;
+        surfaceMesh->vertex[i].z *= scaleFactor;
+    }
+}

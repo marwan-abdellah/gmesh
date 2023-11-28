@@ -19,3 +19,11 @@ SurfaceMesh* createSurfaceMesh(const size_t& numberVertices, const size_t& numbe
  */
 SurfaceMesh* createSurfaceMeshFromBlenderData(const BVertices& vertices,
                                               const BTriangles& triangles);
+
+/**
+ * @brief scaleMeshUniformly
+ * @param surfaceMesh
+ * @param scaleFactor
+ */
+void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor);
+

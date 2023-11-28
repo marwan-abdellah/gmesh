@@ -12,3 +12,11 @@
  * @return
  */
 pybind11::array_t< Vertex > getVertexData(SurfaceMesh* surfaceMesh);
+
+/**
+ * @brief getFaceData
+ * @param surfaceMesh
+ * @return
+ */
+pybind11::array_t< Triangle > getFaceData(SurfaceMesh* surfaceMesh);
+

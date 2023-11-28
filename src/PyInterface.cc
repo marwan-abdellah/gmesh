@@ -70,24 +70,37 @@ void exposeClasses(py::module m)
         .def(py::init<>())
         ;
 
-   py::class_<SurfaceMesh>(m, "SurfaceMesh")
+    py::class_<SurfaceMesh>(m, "SurfaceMesh")
         .def(py::init<>());
 
     py::class_<Vertex>(m, "Vertex")
-        .def(py::init<const float&, const float&, const float&>())
+        .def(py::init<>())
+        ;
+
+    py::class_<Triangle>(m, "Triangle")
+        .def(py::init<>())
         ;
 }
 
 void exposeFunctions(py::module m) {
 
-    m.def("createSurfaceMeshFromBlenderData",
-          &createSurfaceMeshFromBlenderData,
+    // Creation of a SurfaceMesh from blender data, i.e. the input interface
+    m.def("create_surface_mesh_from_blender_data", &createSurfaceMeshFromBlenderData,
           py::return_value_policy::copy);
 
-    m.def("getVertexData", &getVertexData, py::return_value_policy::copy);
+    // Retrieval of the vertex data
+    m.def("get_vertex_data", &getVertexData, py::return_value_policy::copy);
+
+    // Retrieval of the face (triangles) data
+    m.def("get_face_data", &getFaceData, py::return_value_policy::copy);
+
+    // Just a testing function to scale the mesh uniformly
+    m.def("scale_mesh_uniformly", &scaleMeshUniformly);
+
+
 }
 
-PYBIND11_MODULE(cmesh, m) {
+PYBIND11_MODULE(gmesh, m) {
     m.doc() = "Python bindings for the GMesh (gmesh) optimization library";
 
     py::enum_<Base::Value>(m, "Value")
