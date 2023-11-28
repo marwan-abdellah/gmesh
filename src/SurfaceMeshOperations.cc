@@ -72,9 +72,11 @@ float getAngleBetweenVertices(SurfaceMesh *surfaceMesh,
     float ax = surfaceMesh->vertex[a].x;
     float ay = surfaceMesh->vertex[a].y;
     float az = surfaceMesh->vertex[a].z;
+
     float bx = surfaceMesh->vertex[b].x;
     float by = surfaceMesh->vertex[b].y;
     float bz = surfaceMesh->vertex[b].z;
+
     float cx = surfaceMesh->vertex[c].x;
     float cy = surfaceMesh->vertex[c].y;
     float cz = surfaceMesh->vertex[c].z;
@@ -84,10 +86,7 @@ float getAngleBetweenVertices(SurfaceMesh *surfaceMesh,
     float length3 = (bx - cx) * (bx - cx) + (by - cy) * (by - cy) + (bz - cz) * (bz - cz);
 
     float angle;
-    if (length1 == 0 || length2 == 0)
-    {
-        angle = -999;
-    }
+    if (length1 == 0 || length2 == 0) { angle = -999; }
     else
     {
         angle = 0.5 * (length1 + length2 - length3) / std::sqrt(length1 * length2);
@@ -97,168 +96,58 @@ float getAngleBetweenVertices(SurfaceMesh *surfaceMesh,
     return angle;
 }
 
-
-void SurfaceMesh_getMinMaxAngles(SurfaceMesh *surfaceMesh,
-                                 float *minAngle, float *maxAngle,
-                                 int *smallestNumber, int *largestNumber,
-                                 int maxMinAngle, int minMaxAngle)
+Normal getVertexNormal(SurfaceMesh *surfaceMesh, const size_t& n)
 {
-    int num1 = 0; int num2 = 0;
-    float minAngleLocal = 99999.0; float maxAngleLocal = -99999.0;
+    float x = surfaceMesh->vertex[n].x;
+    float y = surfaceMesh->vertex[n].y;
+    float z = surfaceMesh->vertex[n].z;
 
-    for (size_t n = 0; n < surfaceMesh->numberFaces; ++n)
+    Normal normal; normal.x = 0; normal.y = 0; normal.z = 0;
+    int number = 0;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour = neighbourList[n];
+    while (firstNeighbour != nullptr)
     {
-        size_t a = surfaceMesh->face[n].v1;
-        size_t b = surfaceMesh->face[n].v2;
-        size_t c = surfaceMesh->face[n].v3;
+        int a = firstNeighbour->a;
+        int b = firstNeighbour->b;
 
-        float angle = getAngleBetweenVertices(surfaceMesh, a, b, c);
+        float ax = surfaceMesh->vertex[a].x - x;
+        float ay = surfaceMesh->vertex[a].y - y;
+        float az = surfaceMesh->vertex[a].z - z;
+        float length = std::sqrt(ax * ax + ay * ay + az * az);
+        if (length > 0) { ax /= length; ay /= length; az /= length; }
 
-        if (angle != -999)
-        {
-            if (angle < minAngleLocal)
-                minAngleLocal = angle;
+        float bx = surfaceMesh->vertex[b].x - x;
+        float by = surfaceMesh->vertex[b].y - y;
+        float bz = surfaceMesh->vertex[b].z - z;
+        length = std::sqrt(bx * bx + by * by + bz * bz);
+        if (length > 0) { bx /= length; by /= length; bz /= length; }
 
-            if (angle > maxAngleLocal)
-                maxAngleLocal = angle;
+        float gx = ay * bz - az * by;
+        float gy = az * bx - ax * bz;
+        float gz = ax * by - ay * bx;
+        length = std::sqrt(gx * gx + gy * gy + gz * gz);
+        if (length > 0) { gx /= length; gy /= length; gz /= length; }
 
-            if (angle < maxMinAngle)
-                num1++;
+        length = normal.x * gx + normal.y * gy + normal.z * gz;
+        if (length < 0) { gx = -gx; gy = -gy; gz = -gz; }
 
-            if (angle > minMaxAngle)
-                num2++;
-        }
-
-        angle = getAngleBetweenVertices(surfaceMesh, b, a, c);
-        if (angle != -999)
-        {
-            if (angle < minAngleLocal)
-                minAngleLocal = angle;
-
-            if (angle > maxAngleLocal)
-                maxAngleLocal = angle;
-
-            if (angle < maxMinAngle)
-                num1++;
-
-            if (angle > minMaxAngle)
-                num2++;
-        }
-
-        angle = getAngleBetweenVertices(surfaceMesh, c, a, b);
-        if (angle != -999)
-        {
-            if (angle < minAngleLocal)
-                minAngleLocal = angle;
-
-            if (angle > maxAngleLocal)
-                maxAngleLocal = angle;
-
-            if (angle < maxMinAngle)
-                num1++;
-
-            if (angle > minMaxAngle)
-                num2++;
-        }
-    }
-
-    *minAngle = minAngleLocal;
-    *maxAngle = maxAngleLocal;
-    *smallestNumber = num1;
-    *largestNumber = num2;
-}
-
-Normal GetNormals(SurfaceMesh *surfaceMesh, int n)
-{
-    int a, b;
-    float x, y, z;
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr;
-    int number;
-    Normal normal;
-    float gx, gy, gz;
-    float ax, ay, az;
-    float bx, by, bz;
-    float length;
-
-    x = surfaceMesh->vertex[n].x;
-    y = surfaceMesh->vertex[n].y;
-    z = surfaceMesh->vertex[n].z;
-
-    number = 0;
-    normal.x = 0;
-    normal.y = 0;
-    normal.z = 0;
-    first_ngr = neighbor_list[n];
-    while (first_ngr != NULL)
-    {
-        a = first_ngr->a;
-        b = first_ngr->b;
-
-        ax = surfaceMesh->vertex[a].x-x;
-        ay = surfaceMesh->vertex[a].y-y;
-        az = surfaceMesh->vertex[a].z-z;
-        length = std::sqrt(ax*ax+ay*ay+az*az);
-        if (length > 0)
-        {
-            ax /= length;
-            ay /= length;
-            az /= length;
-        }
-        bx = surfaceMesh->vertex[b].x-x;
-        by = surfaceMesh->vertex[b].y-y;
-        bz = surfaceMesh->vertex[b].z-z;
-        length = std::sqrt(bx*bx+by*by+bz*bz);
-        if (length > 0)
-        {
-            bx /= length;
-            by /= length;
-            bz /= length;
-        }
-        gx = ay*bz-az*by;
-        gy = az*bx-ax*bz;
-        gz = ax*by-ay*bx;
-        length = std::sqrt(gx*gx+gy*gy+gz*gz);
-        if (length > 0)
-        {
-            gx /= length;
-            gy /= length;
-            gz /= length;
-        }
-        length = normal.x*gx+normal.y*gy+normal.z*gz;
-        if (length < 0)
-        {
-            gx = -gx;
-            gy = -gy;
-            gz = -gz;
-        }
         normal.x += gx;
         normal.y += gy;
         normal.z += gz;
 
-        number ++;
-        first_ngr = first_ngr->next;
+        number++;
+        firstNeighbour = firstNeighbour->next;
     }
 
     if (number > 0)
     {
-        normal.x /= (float)number;
-        normal.y /= (float)number;
-        normal.z /= (float)number;
-        length = std::sqrt(normal.x*normal.x+normal.y*normal.y+normal.z*normal.z);
-        if (length > 0)
-        {
-            normal.x /= length;
-            normal.y /= length;
-            normal.z /= length;
-        }
+        normal.x /= (float)number; normal.y /= (float)number; normal.z /= (float)number;
+
+        float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+        if (length > 0) { normal.x /= length; normal.y /= length; normal.z /= length; }
     }
-    else
-    {
-        normal.x = 0;
-        normal.y = 0;
-        normal.z = 0;
-    }
+    else { normal.x = 0; normal.y = 0; normal.z = 0; }
 
     return normal;
 }
@@ -285,11 +174,11 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
     int start_ptr, end_ptr;
     int visited;
 
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour;
     float angle, max_angle;
 
-    normal = GetNormals(surfaceMesh, index0);
+    normal = getVertexNormal(surfaceMesh, index0);
 
     //printf("Normal: %d (%.2f, %.2f, %.2f)\n", index0, normal.x, normal.y, normal.z);
     A[0][0] = normal.x*normal.x;
@@ -316,10 +205,10 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
 
         if (dist < ((DIM_SCALE>2) ? (3):(2)))
         {
-            first_ngr = neighbor_list[index];
-            while (first_ngr != NULL)
+            firstNeighbour = neighbourList[index];
+            while (firstNeighbour != NULL)
             {
-                m = first_ngr->a;
+                m = firstNeighbour->a;
                 visited = 0;
                 for (n = 0; n < end_ptr; n++)
                 {
@@ -332,7 +221,7 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
                 }
                 if (visited == 0)
                 {
-                    normal = GetNormals(surfaceMesh, m);
+                    normal = getVertexNormal(surfaceMesh, m);
                     angle = normal0.x*normal.x+normal0.y*normal.y+normal0.z*normal.z;
                     if (angle < 0)
                         angle = -angle;
@@ -348,7 +237,7 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
                     DistArray[end_ptr] = dist+1;
                     end_ptr ++;
                 }
-                first_ngr = first_ngr->next;
+                firstNeighbour = firstNeighbour->next;
             }
         }
     }
@@ -550,82 +439,44 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
 float computeDotProduct(SurfaceMesh *surfaceMesh,
                         const size_t& a, const size_t& b, const size_t& c)
 {
-    float cx, cy, cz;
-    float bx, by, bz;
-    float length;
+    float bx = surfaceMesh->vertex[b].x - surfaceMesh->vertex[a].x;
+    float by = surfaceMesh->vertex[b].y - surfaceMesh->vertex[a].y;
+    float bz = surfaceMesh->vertex[b].z - surfaceMesh->vertex[a].z;
+    float length = std::sqrt(bx * bx + by * by + bz * bz);
+    if (length > 0) { bx /= length; by /= length; bz /= length; }
 
+    float cx = surfaceMesh->vertex[c].x - surfaceMesh->vertex[a].x;
+    float cy = surfaceMesh->vertex[c].y - surfaceMesh->vertex[a].y;
+    float cz = surfaceMesh->vertex[c].z - surfaceMesh->vertex[a].z;
+    length = std::sqrt(cx * cx + cy * cy + cz * cz);
+    if (length > 0) { cx /= length; cy /= length; cz /= length; }
 
-    bx = surfaceMesh->vertex[b].x-surfaceMesh->vertex[a].x;
-    by = surfaceMesh->vertex[b].y-surfaceMesh->vertex[a].y;
-    bz = surfaceMesh->vertex[b].z-surfaceMesh->vertex[a].z;
-    length = std::sqrt(bx*bx+by*by+bz*bz);
-    if (length > 0)
-    {
-        bx /= length;
-        by /= length;
-        bz /= length;
-    }
-
-    cx = surfaceMesh->vertex[c].x-surfaceMesh->vertex[a].x;
-    cy = surfaceMesh->vertex[c].y-surfaceMesh->vertex[a].y;
-    cz = surfaceMesh->vertex[c].z-surfaceMesh->vertex[a].z;
-    length = std::sqrt(cx*cx+cy*cy+cz*cz);
-    if (length > 0)
-    {
-        cx /= length;
-        cy /= length;
-        cz /= length;
-    }
-
-    length = bx*cx+by*cy+bz*cz;
+    length = bx * cx + by * cy + bz * cz;
     return length;
 }
 
 Normal computeCrossProduct(SurfaceMesh *surfaceMesh,
                            const size_t& a, const size_t& b, const size_t& c)
 {
-    float gx, gy, gz;
-    float cx, cy, cz;
-    float bx, by, bz;
-    float length;
-    Normal value;
+    float bx = surfaceMesh->vertex[b].x - surfaceMesh->vertex[a].x;
+    float by = surfaceMesh->vertex[b].y - surfaceMesh->vertex[a].y;
+    float bz = surfaceMesh->vertex[b].z - surfaceMesh->vertex[a].z;
+    float length = sqrt(bx * bx + by * by + bz * bz);
+    if (length > 0) { bx /= length; by /= length; bz /= length; }
 
+    float cx = surfaceMesh->vertex[c].x - surfaceMesh->vertex[a].x;
+    float cy = surfaceMesh->vertex[c].y - surfaceMesh->vertex[a].y;
+    float cz = surfaceMesh->vertex[c].z - surfaceMesh->vertex[a].z;
+    length = sqrt(cx * cx + cy * cy + cz * cz);
+    if (length > 0) { cx /= length; cy /= length; cz /= length; }
 
-    bx = surfaceMesh->vertex[b].x-surfaceMesh->vertex[a].x;
-    by = surfaceMesh->vertex[b].y-surfaceMesh->vertex[a].y;
-    bz = surfaceMesh->vertex[b].z-surfaceMesh->vertex[a].z;
-    length = sqrt(bx*bx+by*by+bz*bz);
-    if (length > 0)
-    {
-        bx /= length;
-        by /= length;
-        bz /= length;
-    }
-    cx = surfaceMesh->vertex[c].x-surfaceMesh->vertex[a].x;
-    cy = surfaceMesh->vertex[c].y-surfaceMesh->vertex[a].y;
-    cz = surfaceMesh->vertex[c].z-surfaceMesh->vertex[a].z;
-    length = sqrt(cx*cx+cy*cy+cz*cz);
-    if (length > 0)
-    {
-        cx /= length;
-        cy /= length;
-        cz /= length;
-    }
-    gx = cy*bz-cz*by;
-    gy = cz*bx-cx*bz;
-    gz = cx*by-cy*bx;
-    length = sqrt(gx*gx+gy*gy+gz*gz);
-    if (length > 0)
-    {
-        gx /= length;
-        gy /= length;
-        gz /= length;
-    }
+    float gx = cy * bz - cz * by;
+    float gy = cz * bx - cx * bz;
+    float gz = cx * by - cy * bx;
+    length = sqrt(gx * gx + gy * gy + gz * gz);
+    if (length > 0) { gx /= length; gy /= length; gz /= length; }
 
-    value.x = gx;
-    value.y = gy;
-    value.z = gz;
-
+    Normal value; value.x = gx; value.y = gy; value.z = gz;
     return value;
 }
 
@@ -673,54 +524,53 @@ char checkFlipAction(SurfaceMesh *surfaceMesh,
                      const size_t& a, const size_t& b, const size_t& c, const size_t& d,
                      const bool& preserveRidges)
 {
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    float min_angle1, min_angle2, angle;
-    Normal normal_a, normal_b;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    // Normal normal_a, normal_b;
 
     /* smaller angle criterion */
-    min_angle1 = -99999;
-    angle = computeDotProduct(surfaceMesh, a, b, c);
-    if (angle > min_angle1)
-        min_angle1 = angle;
+    float minAngle1 = -99999;
+    float angle = computeDotProduct(surfaceMesh, a, b, c);
+    if (angle > minAngle1)
+        minAngle1 = angle;
     angle = computeDotProduct(surfaceMesh, a, b, d);
-    if (angle > min_angle1)
-        min_angle1 = angle;
+    if (angle > minAngle1)
+        minAngle1 = angle;
     angle = computeDotProduct(surfaceMesh, b, a, c);
-    if (angle > min_angle1)
-        min_angle1 = angle;
+    if (angle > minAngle1)
+        minAngle1 = angle;
     angle = computeDotProduct(surfaceMesh, b, a, d);
-    if (angle > min_angle1)
-        min_angle1 = angle;
+    if (angle > minAngle1)
+        minAngle1 = angle;
 
-    min_angle2 = -99999;
+    float minAngle2 = -99999;
     angle = computeDotProduct(surfaceMesh, c, a, d);
-    if (angle > min_angle2)
-        min_angle2 = angle;
+    if (angle > minAngle2)
+        minAngle2 = angle;
     angle = computeDotProduct(surfaceMesh, c, b, d);
-    if (angle > min_angle2)
-        min_angle2 = angle;
+    if (angle > minAngle2)
+        minAngle2 = angle;
     angle = computeDotProduct(surfaceMesh, d, a, c);
-    if (angle > min_angle2)
-        min_angle2 = angle;
+    if (angle > minAngle2)
+        minAngle2 = angle;
     angle = computeDotProduct(surfaceMesh, d, b, c);
-    if (angle > min_angle2)
-        min_angle2 = angle;
+    if (angle > minAngle2)
+        minAngle2 = angle;
 
     // Check which of the triangle combination has the smallest angle
-    // min_angle1 is the minimal angle of the flipped configuration
-    // min_angle2 is the minimal angle of the present configuration
-    if (min_angle1 > min_angle2)
+    // minAngle1 is the minimal angle of the flipped configuration
+    // minAngle2 is the minimal angle of the present configuration
+    if (minAngle1 > minAngle2)
     {
-        // Check if the angle between the normals of the two triangles are
-        // too small for a flip action, for example if we are on a ridge
-        normal_a = computeCrossProduct(surfaceMesh, a, c, b);
-        normal_b = computeCrossProduct(surfaceMesh, a, b, d);
+        // Check if the angle between the normals of the two triangles are too small for a flip
+        // action, for example if we are on a ridge
+        Normal normal1 = computeCrossProduct(surfaceMesh, a, c, b);
+        Normal normal2 = computeCrossProduct(surfaceMesh, a, b, d);
 
-        // If we want to preserve the ridges the angle between the surface
-        // normals must be  smaller than cos(60deg) to flip the edges
+        // If we want to preserve the ridges the angle between the surface normals must be smaller
+        // than cos(60deg) to flip the edges
         if (not preserveRidges ||
-                normal_a.x*normal_b.x+normal_a.y*normal_b.y+normal_a.z*normal_b.z>0.866)
-            return(1);
+                normal1.x * normal2.x + normal1.y * normal2.y + normal1.z * normal2.z > 0.866)
+            return 1;
     }
 
     return 0;
@@ -793,19 +643,19 @@ void getMinMaxAngles(SurfaceMesh *surfaceMesh, float *minangle,
 void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserveRidges)
 {
     int a, b, c;
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr, *second_ngr;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour, *second_ngr;
     NPNT3 *tmp_ngr1, *tmp_ngr2, *tmp_ngr;
     char flip_flag, flip_check;
     int f1, f2, number;
     float ax, ay, az;
 
-    first_ngr = neighbor_list[n];
-    while (first_ngr != NULL)
+    firstNeighbour = neighbourList[n];
+    while (firstNeighbour != NULL)
     {
 
         number = 0;
-        tmp_ngr = neighbor_list[n];
+        tmp_ngr = neighbourList[n];
         while (tmp_ngr != NULL)
         {
             number++;
@@ -818,7 +668,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 ax = 0;
                 ay = 0;
                 az = 0;
-                tmp_ngr = neighbor_list[n];
+                tmp_ngr = neighbourList[n];
                 while (tmp_ngr != NULL)
                 {
                     a = tmp_ngr->a;
@@ -835,16 +685,16 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
             return;
         }
 
-        a = first_ngr->a;
-        b = first_ngr->b;
-        second_ngr = first_ngr->next;
+        a = firstNeighbour->a;
+        b = firstNeighbour->b;
+        second_ngr = firstNeighbour->next;
         if (second_ngr == NULL)
-            second_ngr = neighbor_list[n];
+            second_ngr = neighbourList[n];
         c = second_ngr->b;
 
         flip_flag = 1;
         number = 0;
-        tmp_ngr = neighbor_list[b];
+        tmp_ngr = neighbourList[b];
         while (tmp_ngr != NULL)
         {
             number++;
@@ -853,14 +703,14 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
         if (number <= 3)
             flip_flag = 0;
 
-        tmp_ngr = neighbor_list[a];
+        tmp_ngr = neighbourList[a];
         while (tmp_ngr != NULL)
         {
             if (tmp_ngr->a == c)
                 flip_flag = 0;
             tmp_ngr = tmp_ngr->next;
         }
-        tmp_ngr = neighbor_list[c];
+        tmp_ngr = neighbourList[c];
         while (tmp_ngr != NULL)
         {
             if (tmp_ngr->a == a)
@@ -873,7 +723,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
             flip_check = checkFlipAction(surfaceMesh, n, b, a, c, preserveRidges);
 
             if (flip_check) {
-                f1 = first_ngr->c;
+                f1 = firstNeighbour->c;
                 f2 = second_ngr->c;
 
                 /* Update face info */
@@ -885,14 +735,14 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 surfaceMesh->face[f2].v3 = a; // normal point outward
 
                 /* Delete the entries in neighbor lists */
-                first_ngr->b = c;
-                if (first_ngr->next == NULL)
-                    neighbor_list[n] = neighbor_list[n]->next;
+                firstNeighbour->b = c;
+                if (firstNeighbour->next == NULL)
+                    neighbourList[n] = neighbourList[n]->next;
                 else
-                    first_ngr->next = second_ngr->next;
+                    firstNeighbour->next = second_ngr->next;
                 tmp_ngr1 = second_ngr;
 
-                tmp_ngr = neighbor_list[b];
+                tmp_ngr = neighbourList[b];
                 while (tmp_ngr != NULL)
                 {
                     if (tmp_ngr->b == n)
@@ -907,8 +757,8 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                     tmp_ngr->c = f2;
                     if (tmp_ngr->next == NULL)
                     {
-                        second_ngr = neighbor_list[b];
-                        neighbor_list[b] = second_ngr->next;
+                        second_ngr = neighbourList[b];
+                        neighbourList[b] = second_ngr->next;
                     }
                     else
                     {
@@ -927,7 +777,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
 
                 /* Add the entries in neighbor lists */
-                tmp_ngr = neighbor_list[a];
+                tmp_ngr = neighbourList[a];
                 while (tmp_ngr != NULL)
                 {
                     if ((tmp_ngr->a == n && tmp_ngr->b == b) ||
@@ -950,7 +800,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 else
                     printf("add error 111\n");
 
-                tmp_ngr = neighbor_list[c];
+                tmp_ngr = neighbourList[c];
                 while (tmp_ngr != NULL)
                 {
                     if ((tmp_ngr->a == n && tmp_ngr->b == b) ||
@@ -975,7 +825,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
             }
         }
 
-        first_ngr = first_ngr->next;
+        firstNeighbour = firstNeighbour->next;
     }
 }
 
@@ -984,8 +834,8 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
     int a, b, c;
     float x, y, z;
     Vertex pos_vect;
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr, *second_ngr;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour, *second_ngr;
     float weight, angle;
     float nx, ny, nz;
     EigenVector eigen_vect;
@@ -1003,14 +853,14 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
     nz = 0;
 
     weight = 0;
-    first_ngr = neighbor_list[n];
-    while (first_ngr != NULL)
+    firstNeighbour = neighbourList[n];
+    while (firstNeighbour != NULL)
     {
-        a = first_ngr->a;
-        b = first_ngr->b;
-        second_ngr = first_ngr->next;
+        a = firstNeighbour->a;
+        b = firstNeighbour->b;
+        second_ngr = firstNeighbour->next;
         if (second_ngr == NULL)
-            second_ngr = neighbor_list[n];
+            second_ngr = neighbourList[n];
         c = second_ngr->b;
         pos_vect = getVertexPositionAlongSurface(x, y, z, b, a, c, surfaceMesh);
         angle = computeDotProduct(surfaceMesh, b, a, c);
@@ -1020,7 +870,7 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
         nz += angle*pos_vect.z;
 
         weight += angle;
-        first_ngr = first_ngr->next;
+        firstNeighbour = firstNeighbour->next;
     }
 
     if (weight > 0)
@@ -1068,8 +918,8 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
 void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
 {
     int a, b, c, d, e;
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr, *second_ngr, *third_ngr;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour, *second_ngr, *third_ngr;
     NPNT3 *tmp_ngr;
     float bx, by, bz;
     float cx, cy, cz;
@@ -1087,21 +937,21 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
     pos_x = 0;
     pos_y = 0;
     pos_z = 0;
-    first_ngr = neighbor_list[n];
-    while (first_ngr != NULL)
+    firstNeighbour = neighbourList[n];
+    while (firstNeighbour != NULL)
     {
-        a = first_ngr->a;
-        b = first_ngr->b;
-        second_ngr = first_ngr->next;
+        a = firstNeighbour->a;
+        b = firstNeighbour->b;
+        second_ngr = firstNeighbour->next;
         if (second_ngr == NULL)
-            second_ngr = neighbor_list[n];
+            second_ngr = neighbourList[n];
         c = second_ngr->b;
         third_ngr = second_ngr->next;
         if (third_ngr == NULL)
-            third_ngr = neighbor_list[n];
+            third_ngr = neighbourList[n];
         d = third_ngr->b;
 
-        tmp_ngr = neighbor_list[b];
+        tmp_ngr = neighbourList[b];
 
         // If a vertex is neigbor with a non selected vertex continue
         if (!surfaceMesh->vertex[b].selected)
@@ -1194,7 +1044,7 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
             number++;
         }
 
-        first_ngr = first_ngr->next;
+        firstNeighbour = firstNeighbour->next;
     }
 
     if (number > 0 && !std::isnan(pos_x) && !std::isnan(pos_y) && !std::isnan(pos_z))
@@ -1209,8 +1059,8 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
                         NPNT3 *start_ngr, int *face_available_list,
                         int *face_available_index, int face_marker)
 {
-    NPNT3 **neighbor_list = surfaceMesh->neighborList;
-    NPNT3 *first_ngr, *second_ngr;
+    NPNT3 **neighbourList = surfaceMesh->neighborList;
+    NPNT3 *firstNeighbour, *second_ngr;
     NPNT3 *tmp_ngr, *first_copy_ngr, *second_copy_ngr;
     int min_num, degree;
     int face_index, number;
@@ -1255,33 +1105,33 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
         surfaceMesh->face[face_index].marker = face_marker;
         *face_available_index += 1;
 
-        first_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        first_ngr->a = b;
-        first_ngr->b = c;
-        first_ngr->c = face_index;
-        first_ngr->next = neighbor_list[a];
-        neighbor_list[a] = first_ngr;
+        firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
+        firstNeighbour->a = b;
+        firstNeighbour->b = c;
+        firstNeighbour->c = face_index;
+        firstNeighbour->next = neighbourList[a];
+        neighbourList[a] = firstNeighbour;
 
-        first_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        first_ngr->a = c;
-        first_ngr->b = a;
-        first_ngr->c = face_index;
-        first_ngr->next = neighbor_list[b];
-        neighbor_list[b] = first_ngr;
+        firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
+        firstNeighbour->a = c;
+        firstNeighbour->b = a;
+        firstNeighbour->c = face_index;
+        firstNeighbour->next = neighbourList[b];
+        neighbourList[b] = firstNeighbour;
 
-        first_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        first_ngr->a = a;
-        first_ngr->b = b;
-        first_ngr->c = face_index;
-        first_ngr->next = neighbor_list[c];
-        neighbor_list[c] = first_ngr;
+        firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
+        firstNeighbour->a = a;
+        firstNeighbour->b = b;
+        firstNeighbour->c = face_index;
+        firstNeighbour->next = neighbourList[c];
+        neighbourList[c] = firstNeighbour;
 
     }
     else
     {
         tmp_ngr = start_ngr;
         min_num = tmp_ngr->b;
-        first_ngr = tmp_ngr;
+        firstNeighbour = tmp_ngr;
         tmp_ngr = tmp_ngr->next;
         while (tmp_ngr != start_ngr)
         {
@@ -1289,16 +1139,16 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
             if (degree < min_num)
             {
                 min_num = degree;
-                first_ngr = tmp_ngr;
+                firstNeighbour = tmp_ngr;
             }
             tmp_ngr = tmp_ngr->next;
         }
 
         min_num = 99999;
         tmp_ngr = start_ngr;
-        if (tmp_ngr != first_ngr &&
-                tmp_ngr != first_ngr->next &&
-                tmp_ngr->next != first_ngr)
+        if (tmp_ngr != firstNeighbour &&
+                tmp_ngr != firstNeighbour->next &&
+                tmp_ngr->next != firstNeighbour)
         {
             min_num = tmp_ngr->b;
             second_ngr = tmp_ngr;
@@ -1308,9 +1158,9 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
         while (tmp_ngr != start_ngr)
         {
             degree = tmp_ngr->b;
-            if (tmp_ngr != first_ngr &&
-                    tmp_ngr != first_ngr->next &&
-                    tmp_ngr->next != first_ngr &&
+            if (tmp_ngr != firstNeighbour &&
+                    tmp_ngr != firstNeighbour->next &&
+                    tmp_ngr->next != firstNeighbour &&
                     degree < min_num)
             {
                 min_num = degree;
@@ -1319,23 +1169,23 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
             tmp_ngr = tmp_ngr->next;
         }
 
-        first_ngr->b += 1;
+        firstNeighbour->b += 1;
         second_ngr->b += 1;
         first_copy_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        first_copy_ngr->a = first_ngr->a;
-        first_copy_ngr->b = first_ngr->b;
+        first_copy_ngr->a = firstNeighbour->a;
+        first_copy_ngr->b = firstNeighbour->b;
         second_copy_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
         second_copy_ngr->a = second_ngr->a;
         second_copy_ngr->b = second_ngr->b;
-        tmp_ngr = first_ngr;
-        while (tmp_ngr->next != first_ngr)
+        tmp_ngr = firstNeighbour;
+        while (tmp_ngr->next != firstNeighbour)
             tmp_ngr = tmp_ngr->next;
         tmp_ngr->next = first_copy_ngr;
         first_copy_ngr->next = second_copy_ngr;
         second_copy_ngr->next = second_ngr->next;
-        second_ngr->next = first_ngr;
+        second_ngr->next = firstNeighbour;
 
-        subdividePolygon(surfaceMesh, first_ngr, face_available_list,
+        subdividePolygon(surfaceMesh, firstNeighbour, face_available_list,
                            face_available_index, face_marker);
         subdividePolygon(surfaceMesh, first_copy_ngr, face_available_list,
                            face_available_index, face_marker);
