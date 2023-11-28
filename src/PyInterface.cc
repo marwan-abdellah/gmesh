@@ -103,6 +103,8 @@ void exposeFunctions(py::module m)
 
     m.def("smooth", &smooth);
 
+    m.def("smooth_normals", &smoothNormals);
+
     m.def("coarse", &coarse);
 }
 

@@ -790,7 +790,6 @@ void getMinMaxAngles(SurfaceMesh *surfaceMesh, float *minangle,
     *num_large = num2;
 }
 
-
 void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserveRidges)
 {
     int a, b, c;

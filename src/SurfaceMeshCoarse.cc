@@ -13,96 +13,103 @@ char coarse(SurfaceMesh* surfaceMesh,
 {
 
 
-    int m, n, a0, b0;
+    int m, a0, b0;
     int a, b, c, face_marker;
     float x, y, z;
     NPNT3 *first_ngr, *second_ngr, *tmp_ngr, *tmp_ngr1;
     int number, neighbor_number, num;
-    float nx, ny, nz;
+
     EigenVector eigen_vect;
     EigenValue eigen_value;
-    float average_len, max_len;
+    // float averageLength, max_len;
     float ratio1 = 1.0, ratio2 = 1.0;
     int face_available_list[64], face_available_index;
     int neighbor_tmp_list[64];
     float weight, angle;
 
-    //int start_index, *vertex_index, *face_index;
+    //int start_index, *vertexIndexArray, *faceIndexArray;
 
     Vertex pos_vect;
     float w1, w2, w3;
     char delete_flag;
     float max_angle;
 
-    char stop;
-    int vertex_num;
     bool delete_vertex;
 
-    // Check if neighborlist is created if not create it and reset vertex markers
-    // if they do not excist
+    // Check if neighbour list is created, otherwise create it and reset the vertex markers
     if (!surfaceMesh->neighborList)
         createNeighborlist(surfaceMesh);
 
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("Could not create neigbor list some polygons might not be closed.\n");
-        printf("Bailing out...\n");
+        printf("@coarse: Could not create neigbor list. "
+               "Some polygons might not be closed. Operation not done!\n");
         return 0;
     }
 
-    NPNT3** neighbor_list = surfaceMesh->neighborList;
+    NPNT3** neighbourList = surfaceMesh->neighborList;
 
-    size_t* vertex_index = (size_t *)malloc(sizeof(size_t) * surfaceMesh->numberVertices);
-    size_t* face_index = (size_t *)malloc(sizeof(size_t) * surfaceMesh->numberFaces);
+    size_t* vertexIndexArray = (size_t *) malloc(sizeof(size_t) * surfaceMesh->numberVertices);
+    size_t* faceIndexArray = (size_t *) malloc(sizeof(size_t) * surfaceMesh->numberFaces);
 
-    printf("Num vertices: %d, num faces: %d\n", surfaceMesh->numberVertices,
-           surfaceMesh->numberFaces);
+    if (verbose)
+    {
+        printf("\t The mesh has [%ld] vertices and [%ld] faces\n",
+               surfaceMesh->numberVertices, surfaceMesh->numberFaces);
+    }
 
-    vertex_num = surfaceMesh->numberVertices;
+    size_t vertex_num = surfaceMesh->numberVertices;
 
-    stop = 0;
+    char stop = 0;
+
     // If using sparseness weight, calculate the average segment length of the mesh
     if (densenessWeight > 0.0)
     {
-        average_len = 0;
-        for (n = 0; n < surfaceMesh->numberFaces; n++)
+        float averageLength = 0.f;
+        for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
         {
             a = surfaceMesh->face[n].v1;
             b = surfaceMesh->face[n].v2;
             c = surfaceMesh->face[n].v3;
 
-            nx = std::sqrt((surfaceMesh->vertex[a].x-surfaceMesh->vertex[b].x)*
-                           (surfaceMesh->vertex[a].x-surfaceMesh->vertex[b].x)+
-                           (surfaceMesh->vertex[a].y-surfaceMesh->vertex[b].y)*
-                           (surfaceMesh->vertex[a].y-surfaceMesh->vertex[b].y)+
-                           (surfaceMesh->vertex[a].z-surfaceMesh->vertex[b].z)*
-                           (surfaceMesh->vertex[a].z-surfaceMesh->vertex[b].z));
-            ny = std::sqrt((surfaceMesh->vertex[a].x-surfaceMesh->vertex[c].x)*
-                           (surfaceMesh->vertex[a].x-surfaceMesh->vertex[c].x)+
-                           (surfaceMesh->vertex[a].y-surfaceMesh->vertex[c].y)*
-                           (surfaceMesh->vertex[a].y-surfaceMesh->vertex[c].y)+
-                           (surfaceMesh->vertex[a].z-surfaceMesh->vertex[c].z)*
-                           (surfaceMesh->vertex[a].z-surfaceMesh->vertex[c].z));
-            nz = std::sqrt((surfaceMesh->vertex[c].x-surfaceMesh->vertex[b].x)*
-                           (surfaceMesh->vertex[c].x-surfaceMesh->vertex[b].x)+
-                           (surfaceMesh->vertex[c].y-surfaceMesh->vertex[b].y)*
-                           (surfaceMesh->vertex[c].y-surfaceMesh->vertex[b].y)+
-                           (surfaceMesh->vertex[c].z-surfaceMesh->vertex[b].z)*
-                           (surfaceMesh->vertex[c].z-surfaceMesh->vertex[b].z));
-            average_len += (nx+ny+nz)/3.0f;
+            float nx = std::sqrt((surfaceMesh->vertex[a].x - surfaceMesh->vertex[b].x) *
+                                 (surfaceMesh->vertex[a].x - surfaceMesh->vertex[b].x) +
+                                 (surfaceMesh->vertex[a].y - surfaceMesh->vertex[b].y) *
+                                 (surfaceMesh->vertex[a].y - surfaceMesh->vertex[b].y) +
+                                 (surfaceMesh->vertex[a].z - surfaceMesh->vertex[b].z) *
+                                 (surfaceMesh->vertex[a].z - surfaceMesh->vertex[b].z));
+
+            float ny = std::sqrt((surfaceMesh->vertex[a].x - surfaceMesh->vertex[c].x) *
+                                 (surfaceMesh->vertex[a].x - surfaceMesh->vertex[c].x) +
+                                 (surfaceMesh->vertex[a].y - surfaceMesh->vertex[c].y) *
+                                 (surfaceMesh->vertex[a].y - surfaceMesh->vertex[c].y) +
+                                 (surfaceMesh->vertex[a].z - surfaceMesh->vertex[c].z) *
+                                 (surfaceMesh->vertex[a].z - surfaceMesh->vertex[c].z));
+
+            float nz = std::sqrt((surfaceMesh->vertex[c].x - surfaceMesh->vertex[b].x) *
+                                 (surfaceMesh->vertex[c].x - surfaceMesh->vertex[b].x) +
+                                 (surfaceMesh->vertex[c].y - surfaceMesh->vertex[b].y) *
+                                 (surfaceMesh->vertex[c].y - surfaceMesh->vertex[b].y) +
+                                 (surfaceMesh->vertex[c].z - surfaceMesh->vertex[b].z) *
+                                 (surfaceMesh->vertex[c].z - surfaceMesh->vertex[b].z));
+
+            averageLength += (nx + ny + nz) / 3.0f;
         }
+
         if (surfaceMesh->numberFaces == 0)
         {
-            printf("Zero degree on a vertex ....\n");
-            printf("Bailing out...\n");
+            printf("ERROR: Zero degree on a vertex.\n");
             return 0;
         }
         else
-            surfaceMesh->averageLength = average_len/(float)(surfaceMesh->numberFaces);
+        {
+            surfaceMesh->averageLength = averageLength / (float)(surfaceMesh->numberFaces);
+        }
     }
 
     // The main loop over all vertices
-    for (n = 0; n < surfaceMesh->numberVertices; n++)
+    int max_len = 0;
+    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
 
         // Status report
@@ -122,19 +129,19 @@ char coarse(SurfaceMesh* surfaceMesh,
 
         // Check if the vertex has enough neigborgs to be deleted
         delete_flag = 1;
-        first_ngr = neighbor_list[n];
+        first_ngr = neighbourList[n];
         fflush(stdout);
         while (first_ngr != nullptr)
         {
             a = first_ngr->a;
             number = 0;
             num = 0;
-            second_ngr = neighbor_list[a];
+            second_ngr = neighbourList[a];
             while (second_ngr != nullptr)
             {
                 fflush(stdout);
                 b = second_ngr->a;
-                tmp_ngr = neighbor_list[n];
+                tmp_ngr = neighbourList[n];
                 while (tmp_ngr != nullptr) {
                     if (tmp_ngr->a == b)
                         num++;
@@ -156,7 +163,7 @@ char coarse(SurfaceMesh* surfaceMesh,
             z = surfaceMesh->vertex[n].z;
 
             max_len = -1;
-            first_ngr = neighbor_list[n];
+            first_ngr = neighbourList[n];
 
             // If using sparseness as a criteria for coarsening
             // calculate the maximal segment length
@@ -167,12 +174,13 @@ char coarse(SurfaceMesh* surfaceMesh,
                     a = first_ngr->a;
                     b = first_ngr->b;
 
-                    nx = sqrt((x-surfaceMesh->vertex[a].x)*(x-surfaceMesh->vertex[a].x)+
-                              (y-surfaceMesh->vertex[a].y)*(y-surfaceMesh->vertex[a].y)+
-                              (z-surfaceMesh->vertex[a].z)*(z-surfaceMesh->vertex[a].z));
-                    ny = sqrt((x-surfaceMesh->vertex[b].x)*(x-surfaceMesh->vertex[b].x)+
-                              (y-surfaceMesh->vertex[b].y)*(y-surfaceMesh->vertex[b].y)+
-                              (z-surfaceMesh->vertex[b].z)*(z-surfaceMesh->vertex[b].z));
+                    float nx = std::sqrt((x - surfaceMesh->vertex[a].x)*(x - surfaceMesh->vertex[a].x)+
+                                         (y - surfaceMesh->vertex[a].y)*(y - surfaceMesh->vertex[a].y)+
+                                         (z - surfaceMesh->vertex[a].z)*(z - surfaceMesh->vertex[a].z));
+                    float ny = std::sqrt((x - surfaceMesh->vertex[b].x)*(x - surfaceMesh->vertex[b].x)+
+                                         (y - surfaceMesh->vertex[b].y)*(y - surfaceMesh->vertex[b].y)+
+                                         (z - surfaceMesh->vertex[b].z)*(z - surfaceMesh->vertex[b].z));
+
                     if (nx > max_len)
                         max_len = nx;
                     if (ny > max_len)
@@ -225,7 +233,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                 surfaceMesh->vertex[n].z = -99999;
 
                 neighbor_number = 0;
-                first_ngr = neighbor_list[n];
+                first_ngr = neighbourList[n];
                 while (first_ngr != nullptr)
                 {
                     a = first_ngr->a;
@@ -244,17 +252,17 @@ char coarse(SurfaceMesh* surfaceMesh,
                     surfaceMesh->face[c].marker = -1;
 
                     /* delete neighbors associated with vertex n */
-                    second_ngr = neighbor_list[a];
+                    second_ngr = neighbourList[a];
                     tmp_ngr = second_ngr;
                     while (second_ngr != nullptr)
                     {
                         if (second_ngr->a == n || second_ngr->b == n)
                         {
-                            if (second_ngr == neighbor_list[a])
+                            if (second_ngr == neighbourList[a])
                             {
-                                neighbor_list[a] = second_ngr->next;
+                                neighbourList[a] = second_ngr->next;
                                 free(second_ngr);
-                                second_ngr = neighbor_list[a];
+                                second_ngr = neighbourList[a];
                                 tmp_ngr = second_ngr;
                             }
                             else
@@ -266,7 +274,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                         }
                         else
                         {
-                            if (second_ngr == neighbor_list[a])
+                            if (second_ngr == neighbourList[a])
                             {
                                 second_ngr = second_ngr->next;
                             }
@@ -279,7 +287,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                     }
 
                     number = 0;
-                    second_ngr = neighbor_list[a];
+                    second_ngr = neighbourList[a];
                     while (second_ngr != nullptr)
                     {
                         number++;
@@ -289,19 +297,19 @@ char coarse(SurfaceMesh* surfaceMesh,
                     first_ngr = first_ngr->next;
                 }
 
-                first_ngr = neighbor_list[n];
+                first_ngr = neighbourList[n];
                 while (first_ngr->next != nullptr)
                     first_ngr = first_ngr->next;
-                first_ngr->next = neighbor_list[n];
+                first_ngr->next = neighbourList[n];
 
                 face_available_index = 0;
-                subdividePolygon(surfaceMesh, neighbor_list[n], face_available_list,
+                subdividePolygon(surfaceMesh, neighbourList[n], face_available_list,
                                    &face_available_index, face_marker);
 
                 /* order the neighbors */
                 for (m = 0; m < neighbor_number; m++)
                 {
-                    first_ngr = neighbor_list[neighbor_tmp_list[m]];
+                    first_ngr = neighbourList[neighbor_tmp_list[m]];
                     c = first_ngr->a;
                     while (first_ngr != nullptr)
                     {
@@ -357,19 +365,19 @@ char coarse(SurfaceMesh* surfaceMesh,
                     x = surfaceMesh->vertex[num].x;
                     y = surfaceMesh->vertex[num].y;
                     z = surfaceMesh->vertex[num].z;
-                    nx = 0;
-                    ny = 0;
-                    nz = 0;
+                    float nx = 0;
+                    float ny = 0;
+                    float nz = 0;
 
                     weight = 0;
-                    first_ngr = neighbor_list[num];
+                    first_ngr = neighbourList[num];
                     while (first_ngr != nullptr)
                     {
                         a = first_ngr->a;
                         b = first_ngr->b;
                         second_ngr = first_ngr->next;
                         if (second_ngr == nullptr)
-                            second_ngr = neighbor_list[num];
+                            second_ngr = neighbourList[num];
                         c = second_ngr->b;
                         pos_vect = getVertexPositionAlongSurface(x, y, z, b, a, c, surfaceMesh);
                         angle = computeDotProduct(surfaceMesh, b, a, c);
@@ -429,7 +437,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
     /* Clean the lists of nodes and faces */
     int start_index = 0;
-    for (n = 0; n < surfaceMesh->numberVertices; n++)
+    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
         if (surfaceMesh->vertex[n].x != -99999 &&
                 surfaceMesh->vertex[n].y != -99999 &&
@@ -442,63 +450,63 @@ char coarse(SurfaceMesh* surfaceMesh,
                 surfaceMesh->vertex[start_index].z = surfaceMesh->vertex[n].z;
                 surfaceMesh->vertex[start_index].marker = surfaceMesh->vertex[n].marker;
                 surfaceMesh->vertex[start_index].selected = surfaceMesh->vertex[n].selected;
-                neighbor_list[start_index] = neighbor_list[n];
+                neighbourList[start_index] = neighbourList[n];
             }
 
-            vertex_index[n] = start_index;
+            vertexIndexArray[n] = start_index;
             start_index++;
         }
         else
         {
-            vertex_index[n] = -1;
+            vertexIndexArray[n] = -1;
         }
     }
 
     surfaceMesh->numberVertices = start_index;
 
     start_index = 0;
-    for (n = 0; n < surfaceMesh->numberFaces; n++)
+    for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
     {
         a = surfaceMesh->face[n].v1;
         b = surfaceMesh->face[n].v2;
         c = surfaceMesh->face[n].v3;
         face_marker = surfaceMesh->face[n].marker;
         if (a >= 0 && b >= 0 && c >= 0 &&
-                vertex_index[a] >= 0 && vertex_index[b] >= 0 && vertex_index[c] >= 0)
+                vertexIndexArray[a] >= 0 && vertexIndexArray[b] >= 0 && vertexIndexArray[c] >= 0)
         {
-            surfaceMesh->face[start_index].v1 = vertex_index[a];
-            surfaceMesh->face[start_index].v2 = vertex_index[b];
-            surfaceMesh->face[start_index].v3 = vertex_index[c];
+            surfaceMesh->face[start_index].v1 = vertexIndexArray[a];
+            surfaceMesh->face[start_index].v2 = vertexIndexArray[b];
+            surfaceMesh->face[start_index].v3 = vertexIndexArray[c];
             surfaceMesh->face[start_index].marker = face_marker;
-            face_index[n] = start_index;
+            faceIndexArray[n] = start_index;
             start_index++;
         }
         else
         {
-            face_index[n] = -1;
+            faceIndexArray[n] = -1;
         }
     }
     surfaceMesh->numberFaces = start_index;
 
-    for (n = 0; n < surfaceMesh->numberVertices; n++)
+    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
-        first_ngr = neighbor_list[n];
+        first_ngr = neighbourList[n];
         while (first_ngr != nullptr)
         {
             a = first_ngr->a;
             b = first_ngr->b;
             c = first_ngr->c;
 
-            first_ngr->a = vertex_index[a];
-            first_ngr->b = vertex_index[b];
-            first_ngr->c = face_index[c];
+            first_ngr->a = vertexIndexArray[a];
+            first_ngr->b = vertexIndexArray[b];
+            first_ngr->c = faceIndexArray[c];
 
             first_ngr = first_ngr->next;
         }
     }
 
-    free(vertex_index);
-    free(face_index);
+    free(vertexIndexArray);
+    free(faceIndexArray);
     printf("\n");
     return(stop);
 }

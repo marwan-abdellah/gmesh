@@ -227,13 +227,15 @@ void refine(SurfaceMesh* surfaceMesh);
  * @param minaMaxAngle
  * @param maximumIterations
  * @param preserveRidges
+ * @param verbose
  * @return
  */
 bool smooth(SurfaceMesh *surfaceMesh,
             const size_t& maxMinAngle,
             const size_t& minaMaxAngle,
             const size_t& maximumIterations,
-            const bool& preserveRidges);
+            const bool& preserveRidges,
+            const bool &verbose = false);
 
 /**
  * @brief smoothNormals

@@ -6,77 +6,92 @@ bool smooth(SurfaceMesh *surfaceMesh,
             const size_t& maxMinAngle,
             const size_t& minaMaxAngle,
             const size_t& maximumIterations,
-            const bool& preserveRidges)
+            const bool& preserveRidges,
+            const bool& verbose)
 {
-    float min_angle, max_angle;
-    size_t num_small, num_large;
-    size_t i, n;
-    bool smoothed = false;
 
-    // Check if neighborlist is created
-    if (surfaceMesh->neighborList == nullptr)
+
+
+    // Check if neighbour list is created, otherwise create it
+    if (!surfaceMesh->neighborList)
         createNeighborlist(surfaceMesh);
 
+    // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("Could not create neigbor list some polygons might not be closed \nor you need to harmanize the normals of the mesh.\n");
-        printf("Bailing out...\n");
-        return false;
+        printf("@smooth: Could not create neigbor list. "
+               "Some polygons might not be closed. Operation not done!\n");
+        return 0;
     }
 
-    i = 0;
-
-    getMinMaxAngles(surfaceMesh, &min_angle, &max_angle, &num_small,
-                                &num_large, maxMinAngle, minaMaxAngle);
+    // Compute the distribution of the angles
+    float minAngle, maxAngle;
+    size_t numberSmallerAngles, numberLargerAngles;
+    getMinMaxAngles(surfaceMesh, &minAngle, &maxAngle, &numberSmallerAngles, &numberLargerAngles,
+                    maxMinAngle, minaMaxAngle);
 
     // Print the initial quality only when doing 1 or more iterations
-    if (maximumIterations > 1)
+    size_t i = 0;
+    if (verbose && maximumIterations > 1)
     {
-        printf("Min Max angles\n");
-        printf("%2d: min_angle: %f - max_angle: %f - "
-               "smaller-than-%d: %d - larger-than-%d: %d\n",
-               i, min_angle, max_angle, maxMinAngle, num_small,
-               minaMaxAngle, num_large);
-
+        printf("Min/Max angles:\n");
+        printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
+               "# smaller than %ld: [%ld], "
+               "# greater than %ld: [%ld]\n",
+               i, minAngle, maxAngle,
+               maxMinAngle, numberSmallerAngles,
+               minaMaxAngle, numberLargerAngles);
     }
 
-    // Check if the mesh is smoothed
-    smoothed = min_angle > maxMinAngle && max_angle < minaMaxAngle;
+    // Check if the mesh is smoothed or not
+    bool smoothed = minAngle > maxMinAngle && maxAngle < minaMaxAngle;
     while (!smoothed && i < maximumIterations)
     {
-
         i++;
 
         // Smooth all vertices
-        for (n = 0; n < surfaceMesh->numberVertices; n++)
+        for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
         {
-
             // If we have a vertex wich is not selected we continue
             if (!surfaceMesh->vertex[n].selected)
                 continue;
 
+            // Move the vertex along the surface of the mesh
             moveVerticesAlongSurface(surfaceMesh, n);
+
+            // Flip the edge
             edgeFlipping(surfaceMesh, n, preserveRidges);
         }
 
         // Calculate and print quality after surface smooth
-        getMinMaxAngles(surfaceMesh, &min_angle, &max_angle, &num_small,
-                                    &num_large, maxMinAngle, minaMaxAngle);
+        getMinMaxAngles(surfaceMesh, &minAngle, &maxAngle, &numberSmallerAngles,
+                        &numberLargerAngles, maxMinAngle, minaMaxAngle);
 
         // Print the iteration number only when doing 1 or more iterations
-        if (maximumIterations != 1)
-            printf("%2d: min_angle: %f - max_angle: %f - "
-                   "smaller-than-%d: %d - larger-than-%d: %d\n",
-                   i, min_angle, max_angle, maxMinAngle, num_small,
-                   minaMaxAngle, num_large);
+        if (maximumIterations != 1 && verbose)
+        {
+            printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
+                   "# smaller than %ld: [%ld], "
+                   "# greater than %ld: [%ld]\n",
+                   i, minAngle, maxAngle,
+                   maxMinAngle, numberSmallerAngles,
+                   minaMaxAngle, numberLargerAngles);
+        }
         else
-            printf("    min_angle: %f - max_angle: %f - "
-                   "smaller-than-%d: %d - larger-than-%d: %d\n",
-                   min_angle, max_angle, maxMinAngle, num_small,
-                   minaMaxAngle, num_large);
+        {
+            if (verbose)
+            {
+                printf("\t Min θ: [%f], Max θ: [%f], "
+                       "# smaller than %ld: [%ld], "
+                       "# greater than %ld: [%ld]\n"
+                       , minAngle, maxAngle,
+                       maxMinAngle, numberSmallerAngles,
+                       minaMaxAngle, numberLargerAngles);
+            }
+        }
 
-        // Check if the mesh is smoothed
-        smoothed = min_angle > maxMinAngle && max_angle < minaMaxAngle;
+        // Check if the mesh is smoothed or not
+        smoothed = minAngle > maxMinAngle && maxAngle < minaMaxAngle;
     }
 
     return smoothed;
@@ -93,11 +108,11 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
         createNeighborlist(surfaceMesh);
 
     // If it is still not created, then some polygons are not closed
-    if (surfaceMesh->neighborList == NULL)
+    if (surfaceMesh->neighborList == nullptr)
     {
         printf("@smoothNormals: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
-        return ;
+        return;
     }
 
     // Normal smooth all vertices
@@ -117,9 +132,9 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
 
     if (verbose)
     {
-        printf("\t* Min. Angle: [%f], Max. Angle: [%f], "
-               "Number of angles smaller than %f: [%ld], "
-               "Number of angles greater than %f: [%ld]\n",
+        printf("\t* Min θ: [%f], Max θ: [%f], "
+               "# smaller than %f: [%ld], "
+               "# greater than %f: [%ld]\n",
                minAngle, maxAngle,
                maxMinAngle, numberSmallerAngles,
                minMaxAngle, numberGreaterAngles);
