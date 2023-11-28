@@ -62,6 +62,23 @@ void deleteVertices(SurfaceMesh* surfaceMesh);
  */
 void deleteFaces(SurfaceMesh* surfaceMesh);
 
+/**
+ * @brief translateMesh
+ * @param surfaceMesh
+ * @param dx
+ * @param dy
+ * @param dz
+ */
+void translateMesh(SurfaceMesh* surfaceMesh, const float& dx, const float& dy, const float& dz);
+
+/**
+ * @brief scaleMesh
+ * @param surfaceMesh
+ * @param xScale
+ * @param yScale
+ * @param zScale
+ */
+void scaleMesh(SurfaceMesh* surfaceMesh, const float& xScale, const float& yScale, const float& zScale);
 
 /**
  * @brief scaleMeshUniformly
@@ -70,3 +87,8 @@ void deleteFaces(SurfaceMesh* surfaceMesh);
  */
 void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor);
 
+/**
+ * @brief refine
+ * @param surfaceMesh
+ */
+void refine(SurfaceMesh* surfaceMesh);

@@ -35,7 +35,8 @@ add_library(gmesh
     src/Neighbour.hpp
     src/SurfaceMesh.cc
     src/SurfaceMesh.hh
-    src/SurfaceMesh.hpp)
+    src/SurfaceMesh.hpp
+    src/SurfaceSubdivision.cc)
 
 # Link each target with other targets or add options, etc.
 

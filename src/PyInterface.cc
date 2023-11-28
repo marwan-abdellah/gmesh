@@ -97,7 +97,8 @@ void exposeFunctions(py::module m) {
     // Just a testing function to scale the mesh uniformly
     m.def("scale_mesh_uniformly", &scaleMeshUniformly);
 
-
+    // Refine the mesh
+    m.def("refine", &refine);
 }
 
 PYBIND11_MODULE(gmesh, m) {

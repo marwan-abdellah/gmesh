@@ -88,18 +88,6 @@ SurfaceMesh* createSurfaceMeshFromBlenderData(const BVertices& vertices,
     return surfaceMesh;
 }
 
-void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor)
-{
-    // Fill the vertices
-#pragma omp parallel for
-    for (size_t i = 0; i < surfaceMesh->numberVertices; ++i)
-    {
-        surfaceMesh->vertex[i].x *= scaleFactor;
-        surfaceMesh->vertex[i].y *= scaleFactor;
-        surfaceMesh->vertex[i].z *= scaleFactor;
-    }
-}
-
 // SurfaceMesh_dtor
 void destructSurfaceMesh(SurfaceMesh* surfaceMesh)
 {
@@ -131,7 +119,7 @@ void removeUnconnectedVertices(SurfaceMesh* surfaceMesh)
 
     std::vector< size_t > verticesToRemove(surfaceMesh->numberVertices);
 
-    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
+    for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         if (surfaceMesh->vertex[n].marker < 0)
         {
@@ -184,7 +172,7 @@ void createNeighborlist(SurfaceMesh* surfaceMesh)
                 sizeof(NeighborPoint3Ptr) *  surfaceMesh->numberVertices);
 
     // Initialize the neighbor list
-    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
+    for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         neighbourList[n] = nullptr;
 
@@ -196,7 +184,7 @@ void createNeighborlist(SurfaceMesh* surfaceMesh)
     // Save the line segment so it forms a counter clockwise triangle with the origin vertex
     NPNT3 *firstNeighbour, *secondNeighbour, *auxiliaryNeighbour, *lastNeighbour;
     int numberConnected = 0;
-    for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
+    for (size_t n = 0; n < surfaceMesh->numberFaces; ++n)
     {
         size_t a = surfaceMesh->face[n].v1;
         size_t b = surfaceMesh->face[n].v2;
@@ -393,14 +381,13 @@ void destroyNeighborlist(SurfaceMesh* surfaceMesh)
 
 void deleteFaces(SurfaceMesh* surfaceMesh)
 {
-
     // Iterate over vertices and mark all for deletion
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
         surfaceMesh->vertex[n].marker = -1;
 
     // Delete faces connected to vertices
     int numberRemovedFaces = 0;
-    for (int n=0; n < surfaceMesh->numberFaces; n++)
+    for (int n = 0; n < surfaceMesh->numberFaces; ++n)
     {
         // Check for removal of face
         if (surfaceMesh->face[n].marker < 0)
@@ -432,6 +419,7 @@ void deleteFaces(SurfaceMesh* surfaceMesh)
 
 void deleteVertices(SurfaceMesh* surfaceMesh)
 {
+#pragma omp parallel for
     // Mark faces connected to vertices for deletion
     for (size_t n = 0; n < surfaceMesh->numberFaces; ++n)
     {
@@ -446,3 +434,31 @@ void deleteVertices(SurfaceMesh* surfaceMesh)
     // Delete marked faces
     deleteFaces(surfaceMesh);
 }
+
+void translateMesh(SurfaceMesh* surfaceMesh, const float& dx, const float& dy, const float& dz)
+{
+#pragma omp parallel for
+    for (size_t i = 0; i < surfaceMesh->numberVertices; ++i)
+    {
+        surfaceMesh->vertex[i].x += dx;
+        surfaceMesh->vertex[i].y += dy;
+        surfaceMesh->vertex[i].z += dz;
+    }
+}
+
+void scaleMesh(SurfaceMesh* surfaceMesh, const float& xScale, const float& yScale, const float& zScale)
+{
+#pragma omp parallel for
+    for (size_t i = 0; i < surfaceMesh->numberVertices; ++i)
+    {
+        surfaceMesh->vertex[i].x *= xScale;
+        surfaceMesh->vertex[i].y *= yScale;
+        surfaceMesh->vertex[i].z *= zScale;
+    }
+}
+
+void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor)
+{
+    scaleMesh(surfaceMesh, scaleFactor, scaleFactor, scaleFactor);
+}
+
