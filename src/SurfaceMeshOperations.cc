@@ -903,129 +903,129 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
 
 void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
 {
-    int a, b, c, d, e;
-    NPNT3 **neighbourList = surfaceMesh->neighborList;
-    NPNT3 *firstNeighbour, *second_ngr, *third_ngr;
-    NPNT3 *tmp_ngr;
-    float bx, by, bz;
-    float cx, cy, cz;
-    float dx, dy, dz;
-    float fx, fy, fz;
-    float gx, gy, gz;
-    float pos_x, pos_y, pos_z;
-    int numberIterations, num;
-    float theta, phi, alpha;
-    float length;
-    Normal normal, sv;
-
-
-    numberIterations = 0;
-    pos_x = 0;
-    pos_y = 0;
-    pos_z = 0;
-    firstNeighbour = neighbourList[n];
+    int numberIterations = 0;
+    float xPos = 0; float yPos = 0; float zPos = 0;
+    NPNT3** neighbourList = surfaceMesh->neighborList;
+    NPNT3* firstNeighbour = neighbourList[n];
     while (firstNeighbour != nullptr)
     {
-        a = firstNeighbour->a;
-        b = firstNeighbour->b;
-        second_ngr = firstNeighbour->next;
-        if (second_ngr == nullptr)
-            second_ngr = neighbourList[n];
-        c = second_ngr->b;
-        third_ngr = second_ngr->next;
-        if (third_ngr == nullptr)
-            third_ngr = neighbourList[n];
-        d = third_ngr->b;
+        int a = firstNeighbour->a;
+        int b = firstNeighbour->b;
 
-        tmp_ngr = neighbourList[b];
+        NPNT3* secondNeighbour = firstNeighbour->next;
+
+        if (secondNeighbour == nullptr)
+            secondNeighbour = neighbourList[n];
+
+        int c = secondNeighbour->b;
+
+        NPNT3* thirdNeighbour = secondNeighbour->next;
+        if (thirdNeighbour == nullptr)
+            thirdNeighbour = neighbourList[n];
+
+        int d = thirdNeighbour->b;
+
+        NPNT3* auxNeighbour = neighbourList[b];
 
         // If a vertex is neigbor with a non selected vertex continue
         if (!surfaceMesh->vertex[b].selected)
             return;
 
-        while (tmp_ngr != nullptr)
+        while (auxNeighbour != nullptr)
         {
-            if ((tmp_ngr->a == c && tmp_ngr->b != n) ||
-                    (tmp_ngr->b == c && tmp_ngr->a != n))
+            if ((auxNeighbour->a == c && auxNeighbour->b != n) ||
+                (auxNeighbour->b == c && auxNeighbour->a != n))
                 break;
-            tmp_ngr = tmp_ngr->next;
+            auxNeighbour = auxNeighbour->next;
         }
-        if (tmp_ngr->a == c && tmp_ngr->b != n)
-            e = tmp_ngr->b;
-        else if (tmp_ngr->b == c && tmp_ngr->a != n)
-            e = tmp_ngr->a;
+
+        int e;
+        if (auxNeighbour->a == c && auxNeighbour->b != n)
+        {
+            e = auxNeighbour->b;
+        }
+        else if (auxNeighbour->b == c && auxNeighbour->a != n)
+        {
+            e = auxNeighbour->a;
+        }
         else
-            printf("normal smoothing error...\n");
+        {
+            printf("\tERROR @smoothNormal\n");
+        }
 
-        normal = computeCrossProduct(surfaceMesh, n, b, c);
-        gx = normal.x;
-        gy = normal.y;
-        gz = normal.z;
-        dx = 0;
-        dy = 0;
-        dz = 0;
+        Normal normal = computeCrossProduct(surfaceMesh, n, b, c);
+        float gx = normal.x; float gy = normal.y; float gz = normal.z;
+        float dx = 0; float dy = 0; float dz = 0;
 
-        num  = 0;
+        size_t num = 0;
         normal = computeCrossProduct(surfaceMesh, n, a, b);
-        length = normal.x*gx+normal.y*gy+normal.z*gz;
+        float length = normal.x * gx + normal.y * gy + normal.z * gz;
         if (length > 0)
         {
             num++;
-            dx += length*normal.x;
-            dy += length*normal.y;
-            dz += length*normal.z;
+            dx += length * normal.x;
+            dy += length * normal.y;
+            dz += length * normal.z;
         }
         normal = computeCrossProduct(surfaceMesh, n, c, d);
-        length = normal.x*gx+normal.y*gy+normal.z*gz;
+        length = normal.x * gx + normal.y * gy + normal.z * gz;
         if (length > 0)
         {
             num++;
-            dx += length*normal.x;
-            dy += length*normal.y;
-            dz += length*normal.z;
+            dx += length * normal.x;
+            dy += length * normal.y;
+            dz += length * normal.z;
         }
         normal = computeCrossProduct(surfaceMesh, b, e, c);
-        length = normal.x*gx+normal.y*gy+normal.z*gz;
+        length = normal.x * gx+normal.y * gy + normal.z * gz;
         if (length > 0)
         {
             num++;
-            dx += length*normal.x;
-            dy += length*normal.y;
-            dz += length*normal.z;
+            dx += length * normal.x;
+            dy += length * normal.y;
+            dz += length * normal.z;
         }
 
-        length = std::sqrt(dx*dx+dy*dy+dz*dz);
+        length = std::sqrt(dx * dx + dy * dy + dz * dz);
         if (length > 0)
         {
-            dx /= length;
-            dy /= length;
-            dz /= length;
-            fx = gy*dz-gz*dy;
-            fy = gz*dx-gx*dz;
-            fz = gx*dy-gy*dx;
-            cx = surfaceMesh->vertex[c].x;
-            cy = surfaceMesh->vertex[c].y;
-            cz = surfaceMesh->vertex[c].z;
-            bx = surfaceMesh->vertex[b].x;
-            by = surfaceMesh->vertex[b].y;
-            bz = surfaceMesh->vertex[b].z;
+            dx /= length; dy /= length; dz /= length;
+
+            float fx = gy * dz - gz * dy;
+            float fy = gz * dx - gx * dz;
+            float fz = gx * dy - gy * dx;
+
+            float cx = surfaceMesh->vertex[c].x;
+            float cy = surfaceMesh->vertex[c].y;
+            float cz = surfaceMesh->vertex[c].z;
+
+            float bx = surfaceMesh->vertex[b].x;
+            float by = surfaceMesh->vertex[b].y;
+            float bz = surfaceMesh->vertex[b].z;
+
             length = fx*(bx-cx)+fy*(by-cy)+fz*(bz-cz);
+            float theta, phi;
             if (length >= 0)
             {
-                theta = (float) std::atan2(by-cy, bx-cx);
-                phi = (float) std::atan2(bz-cz, sqrt((bx-cx)*(bx-cx)+(by-cy)*(by-cy)));
+                theta = (float) std::atan2(by - cy, bx - cx);
+                phi = (float) std::atan2(bz - cz,
+                                         std::sqrt((bx - cx) * (bx - cx) + (by - cy) * (by - cy)));
             }
             else
             {
-                theta = (float) std::atan2(cy-by, cx-bx);
-                phi = (float) std::atan2(cz-bz, sqrt((bx-cx)*(bx-cx)+(by-cy)*(by-cy)));
+                theta = (float) std::atan2(cy - by, cx - bx);
+                phi = (float) std::atan2(cz - bz,
+                                         std::sqrt((bx - cx) * (bx - cx) + (by - cy) * (by - cy)));
             }
 
-            alpha = std::acos(dx*gx+dy*gy+dz*gz)/(float)(4.0-num);
-            sv = rotate(surfaceMesh->vertex[n].x-cx, surfaceMesh->vertex[n].y-cy, surfaceMesh->vertex[n].z-cz, theta, phi, alpha);
-            pos_x += sv.x+cx;
-            pos_y += sv.y+cy;
-            pos_z += sv.z+cz;
+            float alpha = std::acos(dx * gx + dy * gy + dz * gz) / (float)(4.0 - num);
+            Normal rotatedNormal = rotate(surfaceMesh->vertex[n].x - cx,
+                                          surfaceMesh->vertex[n].y - cy,
+                                          surfaceMesh->vertex[n].z - cz, theta, phi, alpha);
+
+            xPos += rotatedNormal.x + cx;
+            yPos += rotatedNormal.y + cy;
+            zPos += rotatedNormal.z + cz;
 
             numberIterations++;
         }
@@ -1033,17 +1033,17 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
         firstNeighbour = firstNeighbour->next;
     }
 
-    if (numberIterations > 0 && !std::isnan(pos_x) && !std::isnan(pos_y) && !std::isnan(pos_z))
+    if (numberIterations > 0 && !std::isnan(xPos) && !std::isnan(yPos) && !std::isnan(zPos))
     {
-        surfaceMesh->vertex[n].x = pos_x/(float)numberIterations;
-        surfaceMesh->vertex[n].y = pos_y/(float)numberIterations;
-        surfaceMesh->vertex[n].z = pos_z/(float)numberIterations;
+        surfaceMesh->vertex[n].x = xPos / (float) numberIterations;
+        surfaceMesh->vertex[n].y = yPos / (float) numberIterations;
+        surfaceMesh->vertex[n].z = zPos / (float) numberIterations;
     }
 }
 
 void subdividePolygon(SurfaceMesh *surfaceMesh,
-                        NPNT3 *start_ngr, int *face_available_list,
-                        int *face_available_index, int face_marker)
+                      NPNT3 *start_ngr, int *face_available_list,
+                      int *face_available_index, int face_marker)
 {
     NPNT3 **neighbourList = surfaceMesh->neighborList;
     NPNT3 *firstNeighbour, *second_ngr;

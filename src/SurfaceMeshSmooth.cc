@@ -9,9 +9,6 @@ bool smooth(SurfaceMesh *surfaceMesh,
             const bool& preserveRidges,
             const bool& verbose)
 {
-
-
-
     // Check if neighbour list is created, otherwise create it
     if (!surfaceMesh->neighborList)
         createNeighborlist(surfaceMesh);
@@ -36,8 +33,8 @@ bool smooth(SurfaceMesh *surfaceMesh,
     {
         printf("Min/Max angles:\n");
         printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
-               "# smaller than %ld: [%ld], "
-               "# greater than %ld: [%ld]\n",
+               "< θ = %ld: [%ld], "
+               "> θ = %ld: [%ld]\n",
                i, minAngle, maxAngle,
                maxMinAngle, numberSmallerAngles,
                minaMaxAngle, numberLargerAngles);
@@ -71,8 +68,8 @@ bool smooth(SurfaceMesh *surfaceMesh,
         if (maximumIterations != 1 && verbose)
         {
             printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
-                   "# smaller than %ld: [%ld], "
-                   "# greater than %ld: [%ld]\n",
+                   "< θ = %ld: [%ld], "
+                   "> θ = %ld: [%ld]\n",
                    i, minAngle, maxAngle,
                    maxMinAngle, numberSmallerAngles,
                    minaMaxAngle, numberLargerAngles);
@@ -82,8 +79,8 @@ bool smooth(SurfaceMesh *surfaceMesh,
             if (verbose)
             {
                 printf("\t Min θ: [%f], Max θ: [%f], "
-                       "# smaller than %ld: [%ld], "
-                       "# greater than %ld: [%ld]\n"
+                       "< θ = %ld: [%ld], "
+                       "> θ = %ld: [%ld]\n"
                        , minAngle, maxAngle,
                        maxMinAngle, numberSmallerAngles,
                        minaMaxAngle, numberLargerAngles);
@@ -133,8 +130,8 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
     if (verbose)
     {
         printf("\t* Min θ: [%f], Max θ: [%f], "
-               "# smaller than %f: [%ld], "
-               "# greater than %f: [%ld]\n",
+               "< θ = %f: [%ld], "
+               "> θ = %f: [%ld]\n",
                minAngle, maxAngle,
                maxMinAngle, numberSmallerAngles,
                minMaxAngle, numberGreaterAngles);
