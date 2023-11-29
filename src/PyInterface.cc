@@ -106,6 +106,10 @@ void exposeFunctions(py::module m)
     m.def("smooth_normals", &smoothNormals);
 
     m.def("coarse", &coarse);
+
+    m.def("coarse_dense", &coarseDense);
+
+    m.def("coarse_flat", &coarseFlat);
 }
 
 PYBIND11_MODULE(gmesh, m)

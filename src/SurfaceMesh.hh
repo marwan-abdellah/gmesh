@@ -286,3 +286,12 @@ char coarse(SurfaceMesh* surfaceMesh,
             float coarsenessRate, float flatnessRate, float densenessWeight,
             float maxNormalAngle,
             const bool& verbose = false);
+
+
+
+
+void coarseDense(SurfaceMesh* surfaceMesh,
+                 const float& denseRate, const size_t &iterations, const bool verbose);
+
+void coarseFlat(SurfaceMesh* surfaceMesh,
+                 const float& flatnessRate, const size_t &iterations, const bool verbose);

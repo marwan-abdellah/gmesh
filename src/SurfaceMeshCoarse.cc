@@ -11,54 +11,30 @@ char coarse(SurfaceMesh* surfaceMesh,
             float maxNormalAngle,
             const bool &verbose)
 {
-
-
-    int m, a0, b0;
-    int a, b, c, face_marker;
-    float x, y, z;
-    NPNT3 *first_ngr, *second_ngr, *tmp_ngr, *tmp_ngr1;
-    int number, neighbor_number, num;
-
-    EigenVector eigen_vect;
-    EigenValue eigen_value;
-    // float averageLength, max_len;
-    float ratio1 = 1.0, ratio2 = 1.0;
-    int face_available_list[64], face_available_index;
-    int neighbor_tmp_list[64];
-    float weight, angle;
-
-    //int start_index, *vertexIndexArray, *faceIndexArray;
-
-    Vertex pos_vect;
-    float w1, w2, w3;
-    char delete_flag;
-    float max_angle;
-
-    bool delete_vertex;
-
-    // Check if neighbour list is created, otherwise create it and reset the vertex markers
+    // Check if neighbour list is created, otherwise create it
     if (!surfaceMesh->neighborList)
         createNeighborlist(surfaceMesh);
 
+
+    // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("@coarse: Could not create neigbor list. "
+        printf("\tERROR @coarse: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
         return 0;
     }
 
     NPNT3** neighbourList = surfaceMesh->neighborList;
-
     size_t* vertexIndexArray = (size_t *) malloc(sizeof(size_t) * surfaceMesh->numberVertices);
     size_t* faceIndexArray = (size_t *) malloc(sizeof(size_t) * surfaceMesh->numberFaces);
 
     if (verbose)
     {
-        printf("\t The mesh has [%ld] vertices and [%ld] faces\n",
+        printf("\tThe original mesh has [%ld] vertices and [%ld] faces.\n",
                surfaceMesh->numberVertices, surfaceMesh->numberFaces);
     }
 
-    size_t vertex_num = surfaceMesh->numberVertices;
+    size_t inputNumberVertices = surfaceMesh->numberVertices;
 
     char stop = 0;
 
@@ -68,9 +44,9 @@ char coarse(SurfaceMesh* surfaceMesh,
         float averageLength = 0.f;
         for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
         {
-            a = surfaceMesh->face[n].v1;
-            b = surfaceMesh->face[n].v2;
-            c = surfaceMesh->face[n].v3;
+            int a = surfaceMesh->face[n].v1;
+            int b = surfaceMesh->face[n].v2;
+            int c = surfaceMesh->face[n].v3;
 
             float nx = std::sqrt((surfaceMesh->vertex[a].x - surfaceMesh->vertex[b].x) *
                                  (surfaceMesh->vertex[a].x - surfaceMesh->vertex[b].x) +
@@ -98,7 +74,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
         if (surfaceMesh->numberFaces == 0)
         {
-            printf("ERROR: Zero degree on a vertex.\n");
+            printf("\tERROR @coarse: Zero degree on a vertex.\n");
             return 0;
         }
         else
@@ -107,140 +83,157 @@ char coarse(SurfaceMesh* surfaceMesh,
         }
     }
 
+    float ratio1 = 1.0, ratio2 = 1.0;
+    int maxLength = 0;
+    int auxNumber1, auxNumber2;
+    int faceAvailableList[64], faceAvailableIndex;
+    int neighborAuxList[64];
+
     // The main loop over all vertices
-    int max_len = 0;
     for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
-
         // Status report
         if (((n+1) % 888) == 0 || (n+1) == surfaceMesh->numberVertices)
         {
-            printf("%2.2f%% done (%08d)          \r", 100.0*(n+1)/
-                   (float)surfaceMesh->numberVertices, n+1);
+            const float percentage = 100.0 * (n + 1) / (float)surfaceMesh->numberVertices;
+            printf("\tProgress: %2.2f %% done (%ld) \r", percentage, n + 1);
             fflush(stdout);
         }
+        fflush(stdout);
 
         // If the vertex have been flagged to not be removed
         if (!surfaceMesh->vertex[n].selected)
         {
-            //printf("Do not remove vertex %d\n", n);
             continue;
         }
 
         // Check if the vertex has enough neigborgs to be deleted
-        delete_flag = 1;
-        first_ngr = neighbourList[n];
-        fflush(stdout);
-        while (first_ngr != nullptr)
+        char deleteFlag = 1;
+        NPNT3* firstNeighbour = neighbourList[n];
+        while (firstNeighbour != nullptr)
         {
-            a = first_ngr->a;
-            number = 0;
-            num = 0;
-            second_ngr = neighbourList[a];
-            while (second_ngr != nullptr)
+            int a = firstNeighbour->a;
+            auxNumber1 = 0;
+            auxNumber2 = 0;
+
+            NPNT3* secondNeighbour = neighbourList[a];
+            while (secondNeighbour != nullptr)
             {
                 fflush(stdout);
-                b = second_ngr->a;
-                tmp_ngr = neighbourList[n];
-                while (tmp_ngr != nullptr) {
-                    if (tmp_ngr->a == b)
-                        num++;
-                    tmp_ngr = tmp_ngr->next;
+                int b = secondNeighbour->a;
+                NPNT3* auxNeighbour1 = neighbourList[n];
+                while (auxNeighbour1 != nullptr)
+                {
+                    if (auxNeighbour1->a == b)
+                        auxNumber2++;
+                    auxNeighbour1 = auxNeighbour1->next;
                 }
-                number++;
-                second_ngr = second_ngr->next;
+
+                auxNumber1++;
+                secondNeighbour = secondNeighbour->next;
             }
 
-            if (number <= 3 || num > 2)
-                delete_flag = 0;
-            first_ngr = first_ngr->next;
+            if (auxNumber1 <= 3 || auxNumber2 > 2)
+                deleteFlag = 0;
+
+            firstNeighbour = firstNeighbour->next;
         }
 
-        if (delete_flag)
+        if (deleteFlag)
         {
-            x = surfaceMesh->vertex[n].x;
-            y = surfaceMesh->vertex[n].y;
-            z = surfaceMesh->vertex[n].z;
+            float x = surfaceMesh->vertex[n].x;
+            float y = surfaceMesh->vertex[n].y;
+            float z = surfaceMesh->vertex[n].z;
 
-            max_len = -1;
-            first_ngr = neighbourList[n];
+            maxLength = -1;
+            firstNeighbour = neighbourList[n];
 
-            // If using sparseness as a criteria for coarsening
-            // calculate the maximal segment length
+            // If using sparseness as a criteria for coarsening calculate the maximal segment length
             if (densenessWeight > 0.0)
             {
-                while (first_ngr != nullptr)
+                while (firstNeighbour != nullptr)
                 {
-                    a = first_ngr->a;
-                    b = first_ngr->b;
+                    int a = firstNeighbour->a;
+                    int b = firstNeighbour->b;
 
-                    float nx = std::sqrt((x - surfaceMesh->vertex[a].x)*(x - surfaceMesh->vertex[a].x)+
-                                         (y - surfaceMesh->vertex[a].y)*(y - surfaceMesh->vertex[a].y)+
-                                         (z - surfaceMesh->vertex[a].z)*(z - surfaceMesh->vertex[a].z));
-                    float ny = std::sqrt((x - surfaceMesh->vertex[b].x)*(x - surfaceMesh->vertex[b].x)+
-                                         (y - surfaceMesh->vertex[b].y)*(y - surfaceMesh->vertex[b].y)+
-                                         (z - surfaceMesh->vertex[b].z)*(z - surfaceMesh->vertex[b].z));
+                    float nx = std::sqrt((x - surfaceMesh->vertex[a].x) *
+                                         (x - surfaceMesh->vertex[a].x) +
+                                         (y - surfaceMesh->vertex[a].y) *
+                                         (y - surfaceMesh->vertex[a].y) +
+                                         (z - surfaceMesh->vertex[a].z) *
+                                         (z - surfaceMesh->vertex[a].z));
+                    float ny = std::sqrt((x - surfaceMesh->vertex[b].x) *
+                                         (x - surfaceMesh->vertex[b].x) +
+                                         (y - surfaceMesh->vertex[b].y) *
+                                         (y - surfaceMesh->vertex[b].y) +
+                                         (z - surfaceMesh->vertex[b].z) *
+                                         (z - surfaceMesh->vertex[b].z));
 
-                    if (nx > max_len)
-                        max_len = nx;
-                    if (ny > max_len)
-                        max_len = ny;
+                    if (nx > maxLength)
+                        maxLength = nx;
 
-                    first_ngr = first_ngr->next;
+                    if (ny > maxLength)
+                        maxLength = ny;
+
+                    firstNeighbour = firstNeighbour->next;
                 }
 
                 // Max segment length over the average segment length of the mesh
-                ratio2 = max_len/surfaceMesh->averageLength;
+                ratio2 = maxLength / surfaceMesh->averageLength;
                 ratio2 = pow(ratio2, densenessWeight);
             }
 
-            // If using curvatory as a coarsening criteria
-            // calculate the local structure tensor
+            // If using curvatory as a coarsening criteria calculate the local structure tensor
+            float maxAngle;
             if (flatnessRate > 0.0)
             {
-                eigen_vect = getEigenVector(surfaceMesh, n, &eigen_value, &max_angle);
+                EigenValue eigenValue;
+                EigenVector eigenVector = getEigenVector(surfaceMesh, n, &eigenValue, &maxAngle);
 
-                if (eigen_value.x == 0)
+                if (eigenValue.x == 0)
                 {
-                    printf("max eigen_value is zero.... \n");
-                    exit(0);
+                    printf("\tERROR @coarse: Max EigenValue is zero!\n");
+                    return 0;
                 }
                 else
                 {
-                    //printf("Eigenvalues: %d, (%.3f, %.3f, %.3f)\n", n,
-                    //	 eigen_value.x, eigen_value.y, eigen_value.z);
-                    ratio1 = fabs((eigen_value.y)/(eigen_value.x));
+                    // printf("\t @coarse: EigenValues: [%ld], "
+                    //  "(%.3f, %.3f, %.3f)\n", n, eigenValue.x, eigenValue.y, eigenValue.z);
+
+
+                    ratio1 = fabs((eigenValue.y)/(eigenValue.x));
                     ratio1 = pow(ratio1, flatnessRate);
-                    //ratio1 = (1.0-max_angle)*fabs((eigen_value.y)/(eigen_value.x));
+                    // ratio1 = (1.0 - maxAngle) * fabs((eigenValue.y) / (eigenValue.x));
                 }
             }
 
             // Compare the two coarseness criterias against the given coarsenessRate
-            delete_vertex = ratio1*ratio2 < coarsenessRate;
+            bool deleteVertex = ratio1 * ratio2 < coarsenessRate;
 
             // Use maximal angle between vertex normal as a complementary coarse criteria
             if (maxNormalAngle > 0)
-                delete_vertex = delete_vertex && max_angle > maxNormalAngle;
+                deleteVertex = deleteVertex && maxAngle > maxNormalAngle;
 
             // Deleting a vertex and retrianglulate the hole
-            if (delete_vertex)
+            if (deleteVertex)
             {
-                vertex_num--;
+                inputNumberVertices--;
 
-                /* delete vertex n */
+                // delete vertex n
                 surfaceMesh->vertex[n].x = -99999;
                 surfaceMesh->vertex[n].y = -99999;
                 surfaceMesh->vertex[n].z = -99999;
 
-                neighbor_number = 0;
-                first_ngr = neighbourList[n];
-                while (first_ngr != nullptr)
+                int neighborNumber = 0;
+                firstNeighbour = neighbourList[n];
+                int face_marker;
+                while (firstNeighbour != nullptr)
                 {
-                    a = first_ngr->a;
-                    c = first_ngr->c;
-                    face_available_list[neighbor_number] = c;
-                    neighbor_tmp_list[neighbor_number] = a;
-                    neighbor_number++;
+                    int a = firstNeighbour->a;
+                    int c = firstNeighbour->c;
+                    faceAvailableList[neighborNumber] = c;
+                    neighborAuxList[neighborNumber] = a;
+                    neighborNumber++;
 
                     // Get face marker
                     face_marker = surfaceMesh->face[c].marker;
@@ -251,143 +244,149 @@ char coarse(SurfaceMesh* surfaceMesh,
                     surfaceMesh->face[c].v3 = -1;
                     surfaceMesh->face[c].marker = -1;
 
-                    /* delete neighbors associated with vertex n */
-                    second_ngr = neighbourList[a];
-                    tmp_ngr = second_ngr;
-                    while (second_ngr != nullptr)
+                    // Delete neighbors associated with vertex n
+                    NPNT3* secondNeighbour = neighbourList[a];
+                    NPNT3* auxNeighbour1 = secondNeighbour;
+                    while (secondNeighbour != nullptr)
                     {
-                        if (second_ngr->a == n || second_ngr->b == n)
+                        if (secondNeighbour->a == n || secondNeighbour->b == n)
                         {
-                            if (second_ngr == neighbourList[a])
+                            if (secondNeighbour == neighbourList[a])
                             {
-                                neighbourList[a] = second_ngr->next;
-                                free(second_ngr);
-                                second_ngr = neighbourList[a];
-                                tmp_ngr = second_ngr;
+                                neighbourList[a] = secondNeighbour->next;
+                                free(secondNeighbour);
+                                secondNeighbour = neighbourList[a];
+                                auxNeighbour1 = secondNeighbour;
                             }
                             else
                             {
-                                tmp_ngr->next = second_ngr->next;
-                                free(second_ngr);
-                                second_ngr = tmp_ngr->next;
+                                auxNeighbour1->next = secondNeighbour->next;
+                                free(secondNeighbour);
+                                secondNeighbour = auxNeighbour1->next;
                             }
                         }
                         else
                         {
-                            if (second_ngr == neighbourList[a])
+                            if (secondNeighbour == neighbourList[a])
                             {
-                                second_ngr = second_ngr->next;
+                                secondNeighbour = secondNeighbour->next;
                             }
                             else
                             {
-                                tmp_ngr = second_ngr;
-                                second_ngr = second_ngr->next;
+                                auxNeighbour1 = secondNeighbour;
+                                secondNeighbour = secondNeighbour->next;
                             }
                         }
                     }
 
-                    number = 0;
-                    second_ngr = neighbourList[a];
-                    while (second_ngr != nullptr)
+                    auxNumber1 = 0;
+                    secondNeighbour = neighbourList[a];
+                    while (secondNeighbour != nullptr)
                     {
-                        number++;
-                        second_ngr = second_ngr->next;
+                        auxNumber1++;
+                        secondNeighbour = secondNeighbour->next;
                     }
-                    first_ngr->b = number;
-                    first_ngr = first_ngr->next;
+                    firstNeighbour->b = auxNumber1;
+                    firstNeighbour = firstNeighbour->next;
                 }
 
-                first_ngr = neighbourList[n];
-                while (first_ngr->next != nullptr)
-                    first_ngr = first_ngr->next;
-                first_ngr->next = neighbourList[n];
+                firstNeighbour = neighbourList[n];
+                while (firstNeighbour->next != nullptr)
+                    firstNeighbour = firstNeighbour->next;
+                firstNeighbour->next = neighbourList[n];
 
-                face_available_index = 0;
-                subdividePolygon(surfaceMesh, neighbourList[n], face_available_list,
-                                   &face_available_index, face_marker);
+                faceAvailableIndex = 0;
+                subdividePolygon(surfaceMesh, neighbourList[n], faceAvailableList,
+                                 &faceAvailableIndex, face_marker);
 
-                /* order the neighbors */
-                for (m = 0; m < neighbor_number; m++)
+                // Order the neighbors
+                for (size_t m = 0; m < neighborNumber; m++)
                 {
-                    first_ngr = neighbourList[neighbor_tmp_list[m]];
-                    c = first_ngr->a;
-                    while (first_ngr != nullptr)
+                    firstNeighbour = neighbourList[neighborAuxList[m]];
+                    int c = firstNeighbour->a;
+                    while (firstNeighbour != nullptr)
                     {
-                        a = first_ngr->a;
-                        b = first_ngr->b;
+                        int a = firstNeighbour->a;
+                        int b = firstNeighbour->b;
 
-                        second_ngr = first_ngr->next;
-                        while (second_ngr != nullptr)
+                        NPNT3* secondNeighbour = firstNeighbour->next;
+                        while (secondNeighbour != nullptr)
                         {
-                            a0 = second_ngr->a;
-                            b0 = second_ngr->b;
+                            int a0 = secondNeighbour->a;
+                            int b0 = secondNeighbour->b;
 
                             // Assume counter clockwise orientation
                             if (a0==b && b0!=a)
                             {
-                                tmp_ngr = first_ngr;
-                                while (tmp_ngr != nullptr)
+                                NPNT3* auxNeighbour1 = firstNeighbour;
+                                while (auxNeighbour1 != nullptr)
                                 {
-                                    if (tmp_ngr->next == second_ngr)
+                                    if (auxNeighbour1->next == secondNeighbour)
                                     {
-                                        tmp_ngr->next = second_ngr->next;
+                                        auxNeighbour1->next = secondNeighbour->next;
                                         break;
                                     }
-                                    tmp_ngr = tmp_ngr->next;
+                                    auxNeighbour1 = auxNeighbour1->next;
                                 }
-                                tmp_ngr = first_ngr->next;
-                                first_ngr->next = second_ngr;
-                                second_ngr->next = tmp_ngr;
+                                auxNeighbour1 = firstNeighbour->next;
+                                firstNeighbour->next = secondNeighbour;
+                                secondNeighbour->next = auxNeighbour1;
                                 break;
                             }
 
-                            second_ngr = second_ngr->next;
+                            secondNeighbour = secondNeighbour->next;
                         }
-                        if (first_ngr->next == nullptr)
+
+                        if (firstNeighbour->next == nullptr)
                         {
-                            if (first_ngr->b != c)
+                            if (firstNeighbour->b != c)
                             {
-                                printf("some polygons are not closed: %d \n", n);
-                                // exit(0);
+                                printf("\tERROR @coarse: Some polygons are not closed @[%ld] \n", n);
                             }
                         }
 
-                        first_ngr = first_ngr->next;
+                        firstNeighbour = firstNeighbour->next;
                     }
                 }
 
-                /* Smooth the neighbors */
-                for (m = 0; m < neighbor_number; m++)
+                // Smooth the neighbors
+                for (size_t m = 0; m < neighborNumber; m++)
                 {
-                    if (!surfaceMesh->vertex[num].selected)
+                    if (!surfaceMesh->vertex[auxNumber2].selected)
                         continue;
-                    num = neighbor_tmp_list[m];
-                    x = surfaceMesh->vertex[num].x;
-                    y = surfaceMesh->vertex[num].y;
-                    z = surfaceMesh->vertex[num].z;
+
+                    auxNumber2 = neighborAuxList[m];
+
+                    x = surfaceMesh->vertex[auxNumber2].x;
+                    y = surfaceMesh->vertex[auxNumber2].y;
+                    z = surfaceMesh->vertex[auxNumber2].z;
+
                     float nx = 0;
                     float ny = 0;
                     float nz = 0;
+                    float weight = 0;
 
-                    weight = 0;
-                    first_ngr = neighbourList[num];
-                    while (first_ngr != nullptr)
+                    firstNeighbour = neighbourList[auxNumber2];
+                    while (firstNeighbour != nullptr)
                     {
-                        a = first_ngr->a;
-                        b = first_ngr->b;
-                        second_ngr = first_ngr->next;
-                        if (second_ngr == nullptr)
-                            second_ngr = neighbourList[num];
-                        c = second_ngr->b;
-                        pos_vect = getVertexPositionAlongSurface(x, y, z, b, a, c, surfaceMesh);
-                        angle = computeDotProduct(surfaceMesh, b, a, c);
+                        int a = firstNeighbour->a;
+                        int b = firstNeighbour->b;
+
+                        NPNT3* secondNeighbour = firstNeighbour->next;
+                        if (secondNeighbour == nullptr)
+                            secondNeighbour = neighbourList[auxNumber2];
+
+                        int c = secondNeighbour->b;
+
+                        Vertex newPosition = getVertexPositionAlongSurface(x, y, z, b, a, c, surfaceMesh);
+                        float angle = computeDotProduct(surfaceMesh, b, a, c);
                         angle += 1.0;
-                        nx += angle*pos_vect.x;
-                        ny += angle*pos_vect.y;
-                        nz += angle*pos_vect.z;
+                        nx += angle * newPosition.x;
+                        ny += angle * newPosition.y;
+                        nz += angle * newPosition.z;
 
                         weight += angle;
-                        first_ngr = first_ngr->next;
+                        firstNeighbour = firstNeighbour->next;
                     }
 
                     if (weight > 0)
@@ -396,65 +395,64 @@ char coarse(SurfaceMesh* surfaceMesh,
                         ny /= weight;
                         nz /= weight;
 
-                        eigen_vect = getEigenVector(surfaceMesh, num, &eigen_value, &max_angle);
-                        if ((eigen_vect.x1==0 && eigen_vect.y1==0 && eigen_vect.z1==0) ||
-                                (eigen_vect.x2==0 && eigen_vect.y2==0 && eigen_vect.z2==0) ||
-                                (eigen_vect.x3==0 && eigen_vect.y3==0 && eigen_vect.z3==0))
+                        EigenValue eigenValue;
+                        EigenVector eigenVector = getEigenVector(surfaceMesh, auxNumber2,
+                                                                 &eigenValue, &maxAngle);
+
+                        if ((eigenVector.x1==0 && eigenVector.y1==0 && eigenVector.z1==0) ||
+                            (eigenVector.x2==0 && eigenVector.y2==0 && eigenVector.z2==0) ||
+                            (eigenVector.x3==0 && eigenVector.y3==0 && eigenVector.z3==0))
                         {
-                            surfaceMesh->vertex[num].x = nx;
-                            surfaceMesh->vertex[num].y = ny;
-                            surfaceMesh->vertex[num].z = nz;
+                            surfaceMesh->vertex[auxNumber2].x = nx;
+                            surfaceMesh->vertex[auxNumber2].y = ny;
+                            surfaceMesh->vertex[auxNumber2].z = nz;
                         }
                         else
                         {
-                            nx -= x;
-                            ny -= y;
-                            nz -= z;
-                            w1 = (nx*eigen_vect.x1+ny*eigen_vect.y1+nz*eigen_vect.z1)/
-                                    (1.0+eigen_value.x);
-                            w2 = (nx*eigen_vect.x2+ny*eigen_vect.y2+nz*eigen_vect.z2)/
-                                    (1.0+eigen_value.y);
-                            w3 = (nx*eigen_vect.x3+ny*eigen_vect.y3+nz*eigen_vect.z3)/
-                                    (1.0+eigen_value.z);
-                            surfaceMesh->vertex[num].x = w1*eigen_vect.x1+w2*eigen_vect.x2+
-                                    w3*eigen_vect.x3 + x;
-                            surfaceMesh->vertex[num].y = w1*eigen_vect.y1+w2*eigen_vect.y2+
-                                    w3*eigen_vect.y3 + y;
-                            surfaceMesh->vertex[num].z = w1*eigen_vect.z1+w2*eigen_vect.z2+
-                                    w3*eigen_vect.z3 + z;
+                            nx -= x; ny -= y; nz -= z;
+
+                            float w1 = (nx * eigenVector.x1 + ny * eigenVector.y1 + nz * eigenVector.z1) /
+                                    (1.0 + eigenValue.x);
+                            float w2 = (nx * eigenVector.x2 + ny * eigenVector.y2 + nz * eigenVector.z2) /
+                                    (1.0 + eigenValue.y);
+                            float w3 = (nx *eigenVector.x3 + ny * eigenVector.y3 + nz * eigenVector.z3) /
+                                    (1.0 + eigenValue.z);
+
+                            surfaceMesh->vertex[auxNumber2].x =
+                                    w1 * eigenVector.x1 + w2 * eigenVector.x2 + w3 * eigenVector.x3 + x;
+                            surfaceMesh->vertex[auxNumber2].y =
+                                    w1 * eigenVector.y1 + w2 * eigenVector.y2 + w3 * eigenVector.y3 + y;
+                            surfaceMesh->vertex[auxNumber2].z =
+                                    w1 * eigenVector.z1 + w2 * eigenVector.z2 + w3 * eigenVector.z3 + z;
                         }
                     }
                 }
             }
         }
-        /*
-      if (vertex_num < MeshSizeUpperLimit) {
-      stop = 1;
-      break;
-      }
-    */
+
+        // if (inputNumberVertices < MeshSizeUpperLimit) { stop = 1; break; }
     }
 
-    /* Clean the lists of nodes and faces */
-    int start_index = 0;
-    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
+    // Clean the lists of nodes and faces
+    int startIndex = 0;
+    for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         if (surfaceMesh->vertex[n].x != -99999 &&
-                surfaceMesh->vertex[n].y != -99999 &&
-                surfaceMesh->vertex[n].z != -99999)
+            surfaceMesh->vertex[n].y != -99999 &&
+            surfaceMesh->vertex[n].z != -99999)
         {
-            if (start_index != n)
+            if (startIndex != n)
             {
-                surfaceMesh->vertex[start_index].x = surfaceMesh->vertex[n].x;
-                surfaceMesh->vertex[start_index].y = surfaceMesh->vertex[n].y;
-                surfaceMesh->vertex[start_index].z = surfaceMesh->vertex[n].z;
-                surfaceMesh->vertex[start_index].marker = surfaceMesh->vertex[n].marker;
-                surfaceMesh->vertex[start_index].selected = surfaceMesh->vertex[n].selected;
-                neighbourList[start_index] = neighbourList[n];
+                surfaceMesh->vertex[startIndex].x = surfaceMesh->vertex[n].x;
+                surfaceMesh->vertex[startIndex].y = surfaceMesh->vertex[n].y;
+                surfaceMesh->vertex[startIndex].z = surfaceMesh->vertex[n].z;
+                surfaceMesh->vertex[startIndex].marker = surfaceMesh->vertex[n].marker;
+                surfaceMesh->vertex[startIndex].selected = surfaceMesh->vertex[n].selected;
+                neighbourList[startIndex] = neighbourList[n];
             }
 
-            vertexIndexArray[n] = start_index;
-            start_index++;
+            vertexIndexArray[n] = startIndex;
+            startIndex++;
         }
         else
         {
@@ -462,51 +460,68 @@ char coarse(SurfaceMesh* surfaceMesh,
         }
     }
 
-    surfaceMesh->numberVertices = start_index;
+    surfaceMesh->numberVertices = startIndex;
 
-    start_index = 0;
+    startIndex = 0;
     for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
     {
-        a = surfaceMesh->face[n].v1;
-        b = surfaceMesh->face[n].v2;
-        c = surfaceMesh->face[n].v3;
-        face_marker = surfaceMesh->face[n].marker;
+        int a = surfaceMesh->face[n].v1;
+        int b = surfaceMesh->face[n].v2;
+        int c = surfaceMesh->face[n].v3;
+        int face_marker = surfaceMesh->face[n].marker;
         if (a >= 0 && b >= 0 && c >= 0 &&
-                vertexIndexArray[a] >= 0 && vertexIndexArray[b] >= 0 && vertexIndexArray[c] >= 0)
+            vertexIndexArray[a] >= 0 && vertexIndexArray[b] >= 0 && vertexIndexArray[c] >= 0)
         {
-            surfaceMesh->face[start_index].v1 = vertexIndexArray[a];
-            surfaceMesh->face[start_index].v2 = vertexIndexArray[b];
-            surfaceMesh->face[start_index].v3 = vertexIndexArray[c];
-            surfaceMesh->face[start_index].marker = face_marker;
-            faceIndexArray[n] = start_index;
-            start_index++;
+            surfaceMesh->face[startIndex].v1 = vertexIndexArray[a];
+            surfaceMesh->face[startIndex].v2 = vertexIndexArray[b];
+            surfaceMesh->face[startIndex].v3 = vertexIndexArray[c];
+            surfaceMesh->face[startIndex].marker = face_marker;
+            faceIndexArray[n] = startIndex;
+            startIndex++;
         }
         else
         {
             faceIndexArray[n] = -1;
         }
     }
-    surfaceMesh->numberFaces = start_index;
+    surfaceMesh->numberFaces = startIndex;
 
     for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
-        first_ngr = neighbourList[n];
-        while (first_ngr != nullptr)
+        NPNT3* firstNeighbour = neighbourList[n];
+        while (firstNeighbour != nullptr)
         {
-            a = first_ngr->a;
-            b = first_ngr->b;
-            c = first_ngr->c;
+            int a = firstNeighbour->a;
+            int b = firstNeighbour->b;
+            int c = firstNeighbour->c;
 
-            first_ngr->a = vertexIndexArray[a];
-            first_ngr->b = vertexIndexArray[b];
-            first_ngr->c = faceIndexArray[c];
+            firstNeighbour->a = vertexIndexArray[a];
+            firstNeighbour->b = vertexIndexArray[b];
+            firstNeighbour->c = faceIndexArray[c];
 
-            first_ngr = first_ngr->next;
+            firstNeighbour = firstNeighbour->next;
         }
     }
 
     free(vertexIndexArray);
     free(faceIndexArray);
-    printf("\n");
+
     return(stop);
 }
+
+
+void coarseDense(SurfaceMesh* surfaceMesh,
+                 const float& denseRate, const size_t &iterations, const bool verbose)
+{
+    for (int64_t i = 0; i < iterations; ++i)
+        if (!coarse(surfaceMesh, denseRate, 0, 10, -1, verbose)) break;
+}
+
+void coarseFlat(SurfaceMesh* surfaceMesh,
+                 const float& flatnessRate, const size_t &iterations, const bool verbose)
+{
+    for (int64_t i = 0; i < iterations; ++i)
+        if (!coarse(surfaceMesh, flatnessRate, 1, 0, -1, verbose)) break;
+}
+
+

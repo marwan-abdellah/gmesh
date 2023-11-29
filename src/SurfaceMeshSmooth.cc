@@ -107,7 +107,7 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
     // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("@smoothNormals: Could not create neigbor list. "
+        printf("\tERROR @smoothNormals: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
         return;
     }

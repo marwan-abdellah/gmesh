@@ -323,7 +323,6 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
     if (x1 > 99999 || x1 < -99999 || x2 > 99999 || x2 < -99999 || x3 > 99999 || x3 < -99999)
     {
         printf("ERROR @getEigenVector: [%f %f %f]\n", x1, x2, x3);
-        exit(0);
     }
 
     A[0][0] -= x1;
@@ -733,7 +732,9 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
 
                 if (auxNeighbour == nullptr)
-                    printf("ERROR @edgeFlipping @ [%ld]\n", n);
+                {
+                    printf("\tERROR @edgeFlipping @ [%ld]\n", n);
+                }
 
                 if (auxNeighbour->a == c)
                 {
@@ -754,7 +755,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("DELETE ERROR @edgeFlipping [%ld : %d %d %d]\n", n, a, b, c);
+                    printf("\tERROR @edgeFlipping [%ld : %d %d %d]\n", n, a, b, c);
                     printf("\t[%f, %f, %f]\n",
                            surfaceMesh->vertex[n].x,
                            surfaceMesh->vertex[n].y,
@@ -785,7 +786,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("ERROR @edgeFlipping: auxNeighbour->a == b && auxNeighbour->b == n\n");
+                    printf("\tERROR @edgeFlipping: auxNeighbour->a == b && auxNeighbour->b == n\n");
                 }
 
                 auxNeighbour = neighbourList[c];
@@ -810,7 +811,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("ERROR @edgeFlipping: auxNeighbour->a == n && auxNeighbour->b == b\n");
+                    printf("\tERROR @edgeFlipping: auxNeighbour->a == n && auxNeighbour->b == b\n");
                 }
             }
         }
