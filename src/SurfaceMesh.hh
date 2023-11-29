@@ -95,20 +95,19 @@ void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor);
 
 
 
-
-
-
 /**
  * @brief getEigenVector
  * @param surfaceMesh
  * @param vertexIndex
  * @param eigenValue
- * @param maxAngle
+ * @param computedMaxAngle
+ * @param verbose
  * @return
  */
 EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
-                         const size_t& vertexIndex, EigenValue* eigenValue,
-                         float *maxAngle);
+                           const size_t& vertexIndex, EigenValue* eigenValue,
+                           float *computedMaxAngle,
+                           const bool &verbose = false);
 
 
 
@@ -172,16 +171,17 @@ char checkFlipAction(SurfaceMesh *surfaceMesh,
 /**
  * @brief getMinMaxAngles
  * @param surfaceMesh
- * @param minangle
- * @param maxangle
- * @param num_small
- * @param num_large
- * @param max_min_angle
- * @param min_max_angle
+ * @param computedMinangle
+ * @param computedMaxangle
+ * @param computedNumberSmallerAngles
+ * @param computedNumberLargerAngles
+ * @param maxMinAngle
+ * @param minMaxAngle
  */
-void getMinMaxAngles(SurfaceMesh *surfaceMesh, float *minangle,
-                     float *maxangle, size_t *num_small, size_t *num_large,
-                     const float &max_min_angle, const float &min_max_angle);
+void getMinMaxAngles(SurfaceMesh *surfaceMesh,
+                     float *computedMinangle, float *computedMaxangle,
+                     size_t *computedNumberSmallerAngles, size_t *computedNumberLargerAngles,
+                     const float &maxMinAngle, const float &minMaxAngle);
 
 /**
  * @brief edgeFlipping
