@@ -39,7 +39,8 @@ add_library(gmesh
     src/SurfaceMeshOperations.cc
     src/SurfaceSubdivision.cc
     src/SurfaceMeshSmooth.cc
-    src/SurfaceMeshCoarse.cc)
+    src/SurfaceMeshCoarse.cc
+)
 
 # Link each target with other targets or add options, etc.
 

@@ -31,7 +31,7 @@ bool smooth(SurfaceMesh *surfaceMesh,
     size_t i = 0;
     if (verbose && maximumIterations > 1)
     {
-        printf("Min/Max angles:\n");
+        printf("\tMin/Max angles:\n");
         printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
                "< θ = %ld: [%ld], "
                "> θ = %ld: [%ld]\n",
@@ -67,9 +67,9 @@ bool smooth(SurfaceMesh *surfaceMesh,
         // Print the iteration number only when doing 1 or more iterations
         if (maximumIterations != 1 && verbose)
         {
-            printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
-                   "< θ = %ld: [%ld], "
-                   "> θ = %ld: [%ld]\n",
+            printf("\t%ld: Min θ: [%f] Max θ: [%f] "
+                   "θ < %ld: [%ld], "
+                   "θ > %ld: [%ld]\r",
                    i, minAngle, maxAngle,
                    maxMinAngle, numberSmallerAngles,
                    minaMaxAngle, numberLargerAngles);
@@ -78,10 +78,10 @@ bool smooth(SurfaceMesh *surfaceMesh,
         {
             if (verbose)
             {
-                printf("\t Min θ: [%f], Max θ: [%f], "
-                       "< θ = %ld: [%ld], "
-                       "> θ = %ld: [%ld]\n"
-                       , minAngle, maxAngle,
+                printf("\t%ld: Min θ: [%f] Max θ: [%f] "
+                       "θ < %ld: [%ld], "
+                       "θ > %ld: [%ld]\r",
+                       i, minAngle, maxAngle,
                        maxMinAngle, numberSmallerAngles,
                        minaMaxAngle, numberLargerAngles);
             }

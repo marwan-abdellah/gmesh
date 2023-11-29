@@ -99,7 +99,11 @@ void exposeFunctions(py::module m)
     m.def("scale_mesh_uniformly", &scaleMeshUniformly);
 
     // Refine the mesh
-    m.def("refine", &refine);
+    m.def("refine", &refine, R"pbdoc(
+        Add two numbers
+
+        Some other explanation about the add function.
+    )pbdoc");
 
     m.def("smooth", &smooth);
 

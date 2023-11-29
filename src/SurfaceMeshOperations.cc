@@ -4,6 +4,7 @@
 #include "Normal.hpp"
 #include <math.h>
 #include <stdio.h>
+#include <algorithm>
 
 #define PIE              3.14159265358979f
 #define DIM_SCALE         1.99
@@ -1177,4 +1178,3 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
                          faceAvailableIndex, faceMarker);
     }
 }
-
