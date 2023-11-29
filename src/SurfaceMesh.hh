@@ -90,11 +90,6 @@ void scaleMesh(SurfaceMesh* surfaceMesh, const float& xScale, const float& yScal
  */
 void scaleMeshUniformly(SurfaceMesh* surfaceMesh, const float& scaleFactor);
 
-
-
-
-
-
 /**
  * @brief getEigenVector
  * @param surfaceMesh
@@ -110,11 +105,29 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
                            const bool &verbose = false);
 
 
-
+/**
+ * @brief getVertexPositionAlongSurface
+ * @param x
+ * @param y
+ * @param z
+ * @param a
+ * @param b
+ * @param c
+ * @param surfaceMesh
+ * @return
+ */
 Vertex getVertexPositionAlongSurface(const float& x, const float& y, const float& z,
                                      const size_t& a, const size_t& b, const size_t& c,
                                      SurfaceMesh *surfaceMesh);
 
+/**
+ * @brief getAngleBetweenVertices
+ * @param surfaceMesh
+ * @param a
+ * @param b
+ * @param c
+ * @return
+ */
 float getAngleBetweenVertices(SurfaceMesh *surfaceMesh,
                               const size_t& a, const size_t& b, const size_t& c);
 
@@ -199,11 +212,17 @@ void edgeFlipping(SurfaceMesh *surfaceMesh,
  */
 void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n);
 
-
+/**
+ * @brief subdividePolygon
+ * @param surfaceMesh
+ * @param startNeighbour
+ * @param faceAvailableList
+ * @param faceAvailableIndex
+ * @param faceMarker
+ */
 void subdividePolygon(SurfaceMesh *surfaceMesh,
-                        NPNT3 *start_ngr, int *face_available_list,
-                        int *face_available_index, int face_marker);
-
+                      NPNT3 *startNeighbour, int *faceAvailableList,
+                      int *faceAvailableIndex, int faceMarker);
 
 /**
  * @brief smoothNormal
@@ -211,8 +230,6 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
  * @param n
  */
 void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n);
-
-
 
 /**
  * @brief refine

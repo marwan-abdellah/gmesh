@@ -950,7 +950,7 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
         }
         else
         {
-            printf("\tERROR @smoothNormal\n");
+            printf("\tERROR @smoothNormal: auxNeighbour\n");
         }
 
         Normal normal = computeCrossProduct(surfaceMesh, n, b, c);
@@ -1003,7 +1003,7 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
             float by = surfaceMesh->vertex[b].y;
             float bz = surfaceMesh->vertex[b].z;
 
-            length = fx*(bx-cx)+fy*(by-cy)+fz*(bz-cz);
+            length = fx * (bx - cx) + fy * (by - cy) + fz * (bz-cz);
             float theta, phi;
             if (length >= 0)
             {
@@ -1042,141 +1042,138 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
 }
 
 void subdividePolygon(SurfaceMesh *surfaceMesh,
-                      NPNT3 *start_ngr, int *face_available_list,
-                      int *face_available_index, int face_marker)
+                      NPNT3 *startNeighbour, int *faceAvailableList,
+                      int *faceAvailableIndex, int faceMarker)
 {
+    int numberIterations = 1;
     NPNT3 **neighbourList = surfaceMesh->neighborList;
-    NPNT3 *firstNeighbour, *second_ngr;
-    NPNT3 *tmp_ngr, *first_copy_ngr, *second_copy_ngr;
-    int min_num, degree;
-    int face_index, numberIterations;
-    int a, b, c;
-
-
-    numberIterations = 1;
-    tmp_ngr = start_ngr;
-    while (tmp_ngr->next != start_ngr)
+    NPNT3 *auxNeighbour = startNeighbour;
+    while (auxNeighbour->next != startNeighbour)
     {
         numberIterations++;
-        tmp_ngr = tmp_ngr->next;
+        auxNeighbour = auxNeighbour->next;
     }
 
     if (numberIterations < 3)
     {
-        printf("error: numberIterations of nodes less than 3 \n");
-        exit(0);
+        printf("\tERROR @subdividePolygon: Number of nodes less than 3!\n");
+        return;
     }
 
+    NPNT3 *firstNeighbour, *secondNeighbour;
+    NPNT3 *firstCopyNeighbour, *secondCopyNeighbour;
     if (numberIterations == 3)
     {
-        a = start_ngr->a;
-        tmp_ngr = start_ngr->next;
-        free(start_ngr);
-        start_ngr = tmp_ngr;
+        int a = startNeighbour->a;
+        auxNeighbour = startNeighbour->next;
+        free(startNeighbour);
+        startNeighbour = auxNeighbour;
 
-        b = start_ngr->a;
-        tmp_ngr = start_ngr->next;
-        free(start_ngr);
-        start_ngr = tmp_ngr;
+        int b = startNeighbour->a;
+        auxNeighbour = startNeighbour->next;
+        free(startNeighbour);
+        startNeighbour = auxNeighbour;
 
-        c = start_ngr->a;
-        tmp_ngr = start_ngr->next;
-        free(start_ngr);
-        start_ngr = tmp_ngr;
+        int c = startNeighbour->a;
+        auxNeighbour = startNeighbour->next;
+        free(startNeighbour);
+        startNeighbour = auxNeighbour;
 
-        face_index = face_available_list[*face_available_index];
-        surfaceMesh->face[face_index].v1 = a;
-        surfaceMesh->face[face_index].v2 = b;
-        surfaceMesh->face[face_index].v3 = c;
-        surfaceMesh->face[face_index].marker = face_marker;
-        *face_available_index += 1;
+        int faceIndex = faceAvailableList[*faceAvailableIndex];
+        surfaceMesh->face[faceIndex].v1 = a;
+        surfaceMesh->face[faceIndex].v2 = b;
+        surfaceMesh->face[faceIndex].v3 = c;
+        surfaceMesh->face[faceIndex].marker = faceMarker;
+        *faceAvailableIndex += 1;
 
         firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
         firstNeighbour->a = b;
         firstNeighbour->b = c;
-        firstNeighbour->c = face_index;
+        firstNeighbour->c = faceIndex;
         firstNeighbour->next = neighbourList[a];
         neighbourList[a] = firstNeighbour;
 
         firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
         firstNeighbour->a = c;
         firstNeighbour->b = a;
-        firstNeighbour->c = face_index;
+        firstNeighbour->c = faceIndex;
         firstNeighbour->next = neighbourList[b];
         neighbourList[b] = firstNeighbour;
 
         firstNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
         firstNeighbour->a = a;
         firstNeighbour->b = b;
-        firstNeighbour->c = face_index;
+        firstNeighbour->c = faceIndex;
         firstNeighbour->next = neighbourList[c];
         neighbourList[c] = firstNeighbour;
-
     }
     else
     {
-        tmp_ngr = start_ngr;
-        min_num = tmp_ngr->b;
-        firstNeighbour = tmp_ngr;
-        tmp_ngr = tmp_ngr->next;
-        while (tmp_ngr != start_ngr)
+        auxNeighbour = startNeighbour;
+        int minNumber = auxNeighbour->b;
+        firstNeighbour = auxNeighbour;
+        auxNeighbour = auxNeighbour->next;
+        while (auxNeighbour != startNeighbour)
         {
-            degree = tmp_ngr->b;
-            if (degree < min_num)
+            int degree = auxNeighbour->b;
+            if (degree < minNumber)
             {
-                min_num = degree;
-                firstNeighbour = tmp_ngr;
+                minNumber = degree;
+                firstNeighbour = auxNeighbour;
             }
-            tmp_ngr = tmp_ngr->next;
+            auxNeighbour = auxNeighbour->next;
         }
 
-        min_num = 99999;
-        tmp_ngr = start_ngr;
-        if (tmp_ngr != firstNeighbour &&
-                tmp_ngr != firstNeighbour->next &&
-                tmp_ngr->next != firstNeighbour)
+        minNumber = 99999;
+        auxNeighbour = startNeighbour;
+        if (auxNeighbour != firstNeighbour &&
+            auxNeighbour != firstNeighbour->next &&
+            auxNeighbour->next != firstNeighbour)
         {
-            min_num = tmp_ngr->b;
-            second_ngr = tmp_ngr;
+            minNumber = auxNeighbour->b;
+            secondNeighbour = auxNeighbour;
         }
 
-        tmp_ngr = tmp_ngr->next;
-        while (tmp_ngr != start_ngr)
+        auxNeighbour = auxNeighbour->next;
+        while (auxNeighbour != startNeighbour)
         {
-            degree = tmp_ngr->b;
-            if (tmp_ngr != firstNeighbour &&
-                    tmp_ngr != firstNeighbour->next &&
-                    tmp_ngr->next != firstNeighbour &&
-                    degree < min_num)
+            int degree = auxNeighbour->b;
+            if (auxNeighbour != firstNeighbour &&
+                auxNeighbour != firstNeighbour->next &&
+                auxNeighbour->next != firstNeighbour &&
+                degree < minNumber)
             {
-                min_num = degree;
-                second_ngr = tmp_ngr;
+                minNumber = degree;
+                secondNeighbour = auxNeighbour;
             }
-            tmp_ngr = tmp_ngr->next;
+
+            auxNeighbour = auxNeighbour->next;
         }
 
         firstNeighbour->b += 1;
-        second_ngr->b += 1;
-        first_copy_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        first_copy_ngr->a = firstNeighbour->a;
-        first_copy_ngr->b = firstNeighbour->b;
-        second_copy_ngr = (NPNT3 *)malloc(sizeof(NPNT3));
-        second_copy_ngr->a = second_ngr->a;
-        second_copy_ngr->b = second_ngr->b;
-        tmp_ngr = firstNeighbour;
-        while (tmp_ngr->next != firstNeighbour)
-            tmp_ngr = tmp_ngr->next;
-        tmp_ngr->next = first_copy_ngr;
-        first_copy_ngr->next = second_copy_ngr;
-        second_copy_ngr->next = second_ngr->next;
-        second_ngr->next = firstNeighbour;
+        secondNeighbour->b += 1;
 
-        subdividePolygon(surfaceMesh, firstNeighbour, face_available_list,
-                           face_available_index, face_marker);
-        subdividePolygon(surfaceMesh, first_copy_ngr, face_available_list,
-                           face_available_index, face_marker);
+        firstCopyNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
+        firstCopyNeighbour->a = firstNeighbour->a;
+        firstCopyNeighbour->b = firstNeighbour->b;
+
+        secondCopyNeighbour = (NPNT3 *)malloc(sizeof(NPNT3));
+        secondCopyNeighbour->a = secondNeighbour->a;
+        secondCopyNeighbour->b = secondNeighbour->b;
+        auxNeighbour = firstNeighbour;
+
+        while (auxNeighbour->next != firstNeighbour)
+            auxNeighbour = auxNeighbour->next;
+
+        auxNeighbour->next = firstCopyNeighbour;
+        firstCopyNeighbour->next = secondCopyNeighbour;
+        secondCopyNeighbour->next = secondNeighbour->next;
+        secondNeighbour->next = firstNeighbour;
+
+        subdividePolygon(surfaceMesh, firstNeighbour, faceAvailableList,
+                         faceAvailableIndex, faceMarker);
+        subdividePolygon(surfaceMesh, firstCopyNeighbour, faceAvailableList,
+                         faceAvailableIndex, faceMarker);
     }
-
-    return;
 }
 
