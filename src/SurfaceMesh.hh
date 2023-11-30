@@ -5,6 +5,7 @@
 #include "EigenValue.hh"
 #include "EigenVector.hpp"
 #include "BMesh.hpp"
+#include <omp.h>
 
 /**
  * @brief createSurfaceMesh
@@ -237,6 +238,7 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n);
  */
 void refine(SurfaceMesh* surfaceMesh);
 
+
 /**
  * @brief smooth
  * @param surfaceMesh
@@ -257,17 +259,11 @@ bool smooth(SurfaceMesh *surfaceMesh,
 /**
  * @brief smoothNormals
  * @param surfaceMesh
- * @param minAngle
- * @param maxAngle
- * @param numberSmallerAngles
- * @param numberGreaterAngles
  * @param maxMinAngle
  * @param minMaxAngle
  * @param verbose
  */
 void smoothNormals(SurfaceMesh *surfaceMesh,
-                   float& minAngle, float& maxAngle,
-                   size_t &numberSmallerAngles, size_t &numberGreaterAngles,
                    const float& maxMinAngle = 15,
                    const float& minMaxAngle = 150,
                    const bool& verbose = false);
@@ -306,3 +302,5 @@ void coarseDense(SurfaceMesh* surfaceMesh,
  */
 void coarseFlat(SurfaceMesh* surfaceMesh,
                  const float& flatnessRate, const size_t &iterations, const bool verbose);
+
+

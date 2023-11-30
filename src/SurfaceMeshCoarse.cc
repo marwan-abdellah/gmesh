@@ -2,6 +2,7 @@
 #include "SurfaceMesh.hpp"
 #include "EigenValue.hh"
 #include "EigenVector.hpp"
+#include "Common.hh"
 #include <stdio.h>
 #include <math.h>
 
@@ -15,11 +16,10 @@ char coarse(SurfaceMesh* surfaceMesh,
     if (!surfaceMesh->neighborList)
         createNeighborlist(surfaceMesh);
 
-
     // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("\tERROR @coarse: Could not create neigbor list. "
+        printf(LIB_STRING "ERROR @coarse: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
         return 0;
     }
@@ -30,7 +30,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
     if (verbose)
     {
-        printf("\tThe original mesh has [%ld] vertices and [%ld] faces.\n",
+        printf(LIB_STRING "Mesh has [%ld] vertices & [%ld] faces.\n",
                surfaceMesh->numberVertices, surfaceMesh->numberFaces);
     }
 
@@ -38,10 +38,10 @@ char coarse(SurfaceMesh* surfaceMesh,
 
     char stop = 0;
 
-    // If using sparseness weight, calculate the average segment length of the mesh
+    // If using sparseness weight, calculate the average segment length of the mesh    
+    float averageLength = 0.f;
     if (densenessWeight > 0.0)
     {
-        float averageLength = 0.f;
         for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
         {
             int a = surfaceMesh->face[n].v1;
@@ -74,11 +74,13 @@ char coarse(SurfaceMesh* surfaceMesh,
 
         if (surfaceMesh->numberFaces == 0)
         {
-            printf("\tERROR @coarse: Zero degree on a vertex.\n");
+            printf(LIB_STRING "ERROR @coarse: Zero degree on a vertex.\n");
             return 0;
         }
         else
         {
+            float averageLength = 0.f;
+
             surfaceMesh->averageLength = averageLength / (float)(surfaceMesh->numberFaces);
         }
     }
@@ -95,8 +97,8 @@ char coarse(SurfaceMesh* surfaceMesh,
         // Status report
         if (((n+1) % 888) == 0 || (n+1) == surfaceMesh->numberVertices)
         {
-            const float percentage = 100.0 * (n + 1) / (float)surfaceMesh->numberVertices;
-            printf("\tProgress: %2.2f %% done (%ld) \r", percentage, n + 1);
+            const float percentage = 100.0 * (n + 1) / (float) surfaceMesh->numberVertices;
+            printf(LIB_STRING "Progress: %2.2f \r", percentage);
             fflush(stdout);
         }
         fflush(stdout);
@@ -180,7 +182,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
                 // Max segment length over the average segment length of the mesh
                 ratio2 = maxLength / surfaceMesh->averageLength;
-                ratio2 = pow(ratio2, densenessWeight);
+                ratio2 = std::pow(ratio2, densenessWeight);
             }
 
             // If using curvatory as a coarsening criteria calculate the local structure tensor
@@ -192,12 +194,12 @@ char coarse(SurfaceMesh* surfaceMesh,
 
                 if (eigenValue.x == 0)
                 {
-                    printf("\tERROR @coarse: Max EigenValue is zero!\n");
+                    printf(LIB_STRING "ERROR @coarse: Max EigenValue is zero!\n");
                     return 0;
                 }
                 else
                 {
-                    // printf("\t @coarse: EigenValues: [%ld], "
+                    // printf(LIB_STRING "@coarse: EigenValues: [%ld], "
                     //  "(%.3f, %.3f, %.3f)\n", n, eigenValue.x, eigenValue.y, eigenValue.z);
 
                     ratio1 = fabs((eigenValue.y)/(eigenValue.x));
@@ -340,7 +342,8 @@ char coarse(SurfaceMesh* surfaceMesh,
                         {
                             if (firstNeighbour->b != c)
                             {
-                                printf("\tERROR @coarse: Some polygons are not closed @[%ld] \n", n);
+                                printf(LIB_STRING
+                                    "ERROR @coarse: Some polygons are not closed @[%ld] \n", n);
                             }
                         }
 
@@ -377,7 +380,8 @@ char coarse(SurfaceMesh* surfaceMesh,
 
                         int c = secondNeighbour->b;
 
-                        Vertex newPosition = getVertexPositionAlongSurface(x, y, z, b, a, c, surfaceMesh);
+                        Vertex newPosition = getVertexPositionAlongSurface(
+                                    x, y, z, b, a, c, surfaceMesh);
                         float angle = computeDotProduct(surfaceMesh, b, a, c);
                         angle += 1.0;
                         nx += angle * newPosition.x;
@@ -468,6 +472,7 @@ char coarse(SurfaceMesh* surfaceMesh,
         int b = surfaceMesh->face[n].v2;
         int c = surfaceMesh->face[n].v3;
         int face_marker = surfaceMesh->face[n].marker;
+
         if (a >= 0 && b >= 0 && c >= 0 &&
             vertexIndexArray[a] >= 0 && vertexIndexArray[b] >= 0 && vertexIndexArray[c] >= 0)
         {
@@ -505,9 +510,8 @@ char coarse(SurfaceMesh* surfaceMesh,
     free(vertexIndexArray);
     free(faceIndexArray);
 
-    return(stop);
+    return stop;
 }
-
 
 void coarseDense(SurfaceMesh* surfaceMesh,
                  const float& denseRate, const size_t &iterations, const bool verbose)

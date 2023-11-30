@@ -34,6 +34,7 @@ SurfaceMesh* createSurfaceMesh(const size_t& numberVertices, const size_t& numbe
     surfaceMesh->pMax->x = 0.f; surfaceMesh->pMax->y = 0.f; surfaceMesh->pMax->z = 0.f;
 
     // Initialize SurfaceMesh structures
+#pragma omp parallel for
     for (size_t i = 0; i < numberVertices; ++i)
     {
         Vertex& vert = surfaceMesh->vertex[i];
@@ -41,6 +42,7 @@ SurfaceMesh* createSurfaceMesh(const size_t& numberVertices, const size_t& numbe
         vert.selected = true;
     }
 
+#pragma omp parallel for
     for (size_t i = 0; i < numberFaces; ++i)
     {
         Triangle& face = surfaceMesh->face[i];
@@ -119,6 +121,7 @@ void removeUnconnectedVertices(SurfaceMesh* surfaceMesh)
 
     std::vector< size_t > verticesToRemove(surfaceMesh->numberVertices);
 
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         if (surfaceMesh->vertex[n].marker < 0)
@@ -132,6 +135,7 @@ void removeUnconnectedVertices(SurfaceMesh* surfaceMesh)
     printf("Removing %ld vertices.\n", numberRemovedVertices);
 
     // Move vertices forward
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         // If a vertex is to be removed
@@ -140,19 +144,23 @@ void removeUnconnectedVertices(SurfaceMesh* surfaceMesh)
             continue;
 
         // Move vertices forward
-        surfaceMesh->vertex[n-verticesToRemove[n]].x = surfaceMesh->vertex[n].x;
-        surfaceMesh->vertex[n-verticesToRemove[n]].y = surfaceMesh->vertex[n].y;
-        surfaceMesh->vertex[n-verticesToRemove[n]].z = surfaceMesh->vertex[n].z;
-        surfaceMesh->vertex[n-verticesToRemove[n]].selected = surfaceMesh->vertex[n].selected;
-        surfaceMesh->vertex[n-verticesToRemove[n]].marker = surfaceMesh->vertex[n].marker;
+        surfaceMesh->vertex[n - verticesToRemove[n]].x = surfaceMesh->vertex[n].x;
+        surfaceMesh->vertex[n - verticesToRemove[n]].y = surfaceMesh->vertex[n].y;
+        surfaceMesh->vertex[n - verticesToRemove[n]].z = surfaceMesh->vertex[n].z;
+        surfaceMesh->vertex[n - verticesToRemove[n]].selected = surfaceMesh->vertex[n].selected;
+        surfaceMesh->vertex[n - verticesToRemove[n]].marker = surfaceMesh->vertex[n].marker;
     }
 
     // Fix face offset
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberFaces; ++n)
     {
-        surfaceMesh->face[n].v1 = surfaceMesh->face[n].v1 - verticesToRemove[surfaceMesh->face[n].v1];
-        surfaceMesh->face[n].v2 = surfaceMesh->face[n].v2 - verticesToRemove[surfaceMesh->face[n].v2];
-        surfaceMesh->face[n].v3 = surfaceMesh->face[n].v3 - verticesToRemove[surfaceMesh->face[n].v3];
+        surfaceMesh->face[n].v1 =
+                surfaceMesh->face[n].v1 - verticesToRemove[surfaceMesh->face[n].v1];
+        surfaceMesh->face[n].v2 =
+                surfaceMesh->face[n].v2 - verticesToRemove[surfaceMesh->face[n].v2];
+        surfaceMesh->face[n].v3 =
+                surfaceMesh->face[n].v3 - verticesToRemove[surfaceMesh->face[n].v3];
     }
 
     // Adjust num_vertices
@@ -172,6 +180,7 @@ void createNeighborlist(SurfaceMesh* surfaceMesh)
                 sizeof(NeighborPoint3Ptr) *  surfaceMesh->numberVertices);
 
     // Initialize the neighbor list
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
     {
         neighbourList[n] = nullptr;
@@ -362,6 +371,7 @@ void destroyNeighborlist(SurfaceMesh* surfaceMesh)
     if (surfaceMesh->neighborList != nullptr)
     {
         // Release the single neighbors
+#pragma omp parallel for
         for (size_t i = 0; i < surfaceMesh->numberVertices; ++i)
         {
             firstNeighbour = surfaceMesh->neighborList[i];
@@ -382,6 +392,7 @@ void destroyNeighborlist(SurfaceMesh* surfaceMesh)
 void deleteFaces(SurfaceMesh* surfaceMesh)
 {
     // Iterate over vertices and mark all for deletion
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
         surfaceMesh->vertex[n].marker = -1;
 
@@ -419,8 +430,8 @@ void deleteFaces(SurfaceMesh* surfaceMesh)
 
 void deleteVertices(SurfaceMesh* surfaceMesh)
 {
-#pragma omp parallel for
     // Mark faces connected to vertices for deletion
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberFaces; ++n)
     {
         if (surfaceMesh->vertex[surfaceMesh->face[n].v1].marker < 0 ||

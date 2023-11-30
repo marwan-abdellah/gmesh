@@ -1,6 +1,8 @@
 #include "SurfaceMesh.hpp"
 #include "SurfaceMesh.hh"
+#include "Common.hh"
 #include <stdio.h>
+
 
 bool smooth(SurfaceMesh *surfaceMesh,
             const size_t& maxMinAngle,
@@ -16,7 +18,7 @@ bool smooth(SurfaceMesh *surfaceMesh,
     // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("@smooth: Could not create neigbor list. "
+        printf(LIB_STRING "ERROR @smooth: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
         return 0;
     }
@@ -31,13 +33,12 @@ bool smooth(SurfaceMesh *surfaceMesh,
     size_t i = 0;
     if (verbose && maximumIterations > 1)
     {
-        printf("\tMin/Max angles:\n");
-        printf("\t [%ld]: Min θ: [%f], Max θ: [%f], "
-               "< θ = %ld: [%ld], "
-               "> θ = %ld: [%ld]\n",
+        printf(LIB_STRING "Angles:\n");
+        printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
+               "θ < %ld, θ > %ld [%ld, %ld]\n",
                i, minAngle, maxAngle,
-               maxMinAngle, numberSmallerAngles,
-               minaMaxAngle, numberLargerAngles);
+               maxMinAngle, minaMaxAngle,
+               numberSmallerAngles, numberLargerAngles);
     }
 
     // Check if the mesh is smoothed or not
@@ -67,23 +68,21 @@ bool smooth(SurfaceMesh *surfaceMesh,
         // Print the iteration number only when doing 1 or more iterations
         if (maximumIterations != 1 && verbose)
         {
-            printf("\t%ld: Min θ: [%f] Max θ: [%f] "
-                   "θ < %ld: [%ld], "
-                   "θ > %ld: [%ld]\r",
+            printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
+                   "θ < %ld, θ > %ld [%ld, %ld]\n",
                    i, minAngle, maxAngle,
-                   maxMinAngle, numberSmallerAngles,
-                   minaMaxAngle, numberLargerAngles);
+                   maxMinAngle, minaMaxAngle,
+                   numberSmallerAngles, numberLargerAngles);
         }
         else
         {
             if (verbose)
             {
-                printf("\t%ld: Min θ: [%f] Max θ: [%f] "
-                       "θ < %ld: [%ld], "
-                       "θ > %ld: [%ld]\r",
+                printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
+                       "θ < %ld, θ > %ld [%ld, %ld]\n",
                        i, minAngle, maxAngle,
-                       maxMinAngle, numberSmallerAngles,
-                       minaMaxAngle, numberLargerAngles);
+                       maxMinAngle, minaMaxAngle,
+                       numberSmallerAngles, numberLargerAngles);
             }
         }
 
@@ -95,8 +94,6 @@ bool smooth(SurfaceMesh *surfaceMesh,
 }
 
 void smoothNormals(SurfaceMesh *surfaceMesh,
-                   float& minAngle, float& maxAngle,
-                   size_t& numberSmallerAngles, size_t& numberGreaterAngles,
                    const float& maxMinAngle, const float& minMaxAngle,
                    const bool &verbose)
 {
@@ -107,7 +104,7 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
     // If it is still not created, then some polygons are not closed
     if (surfaceMesh->neighborList == nullptr)
     {
-        printf("\tERROR @smoothNormals: Could not create neigbor list. "
+        printf("ERROR @smoothNormals: Could not create neigbor list. "
                "Some polygons might not be closed. Operation not done!\n");
         return;
     }
@@ -123,17 +120,18 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
     }
 
     // Compute the angles
+    float minAngle, maxAngle;
+    size_t numberSmallerAngles, numberGreaterAngles;
     getMinMaxAngles(surfaceMesh,
                     &minAngle, &maxAngle, &numberSmallerAngles, &numberGreaterAngles,
                     maxMinAngle, minMaxAngle);
 
     if (verbose)
     {
-        printf("\t* Min θ: [%f], Max θ: [%f], "
-               "< θ = %f: [%ld], "
-               "> θ = %f: [%ld]\n",
+        printf(LIB_STRING "Min θ, Max θ [%.5f, %.5f] "
+               "θ < %f, θ > %f [%ld, %ld]\n",
                minAngle, maxAngle,
-               maxMinAngle, numberSmallerAngles,
-               minMaxAngle, numberGreaterAngles);
+               maxMinAngle, minMaxAngle,
+               numberSmallerAngles, numberGreaterAngles);
     }
 }

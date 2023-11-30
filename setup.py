@@ -24,7 +24,7 @@ ext_modules = [
         'gmesh',
         src_files,
         extra_compile_args=['-fopenmp'],
-        # extra_link_args=['-lgomp'],
+        extra_link_args=['-lgomp'],
         include_dirs=[os.path.join(base_path, 'include')],
         language='c++',
         undef_macros=["NDEBUG"],

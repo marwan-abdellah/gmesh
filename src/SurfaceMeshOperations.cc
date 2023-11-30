@@ -2,6 +2,7 @@
 #include "EigenValue.hh"
 #include "EigenVector.hpp"
 #include "Normal.hpp"
+#include "Common.hh"
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
@@ -157,8 +158,8 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
     Normal vertexNormal = getVertexNormal(surfaceMesh, vertexIndex);
     if (verbose)
     {
-        printf("Normal@ [%ld]: (%.2f, %.2f, %.2f)\n", vertexIndex,
-               vertexNormal.x, vertexNormal.y, vertexNormal.z);
+        printf(LIB_STRING "\tNormal@ [%ld]: (%.2f, %.2f, %.2f)\n",
+               vertexIndex, vertexNormal.x, vertexNormal.y, vertexNormal.z);
     }
 
     double A[3][3];
@@ -276,7 +277,7 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
     // If we have a perfect flat area inline of one of the x, y, z axis
     if (std::isnan(x1) || std::isnan(x2) || std::isnan(x3))
     {
-        // printf("\t@getEigenVector: nan@ [%ld]\n", vertexIndex);
+        // printf(LIB_STRING "@getEigenVector: nan@ [%ld]\n", vertexIndex);
 
         eigenValue->x = c2;
         eigenValue->y = 0;
@@ -323,7 +324,7 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
 
     if (x1 > 99999 || x1 < -99999 || x2 > 99999 || x2 < -99999 || x3 > 99999 || x3 < -99999)
     {
-        printf("ERROR @getEigenVector: [%f %f %f]\n", x1, x2, x3);
+        printf(LIB_STRING "\tERROR @getEigenVector: [%f %f %f]\n", x1, x2, x3);
     }
 
     A[0][0] -= x1;
@@ -734,7 +735,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
 
                 if (auxNeighbour == nullptr)
                 {
-                    printf("\tERROR @edgeFlipping @ [%ld]\n", n);
+                    printf(LIB_STRING "\tERROR @edgeFlipping @ [%ld]\n", n);
                 }
 
                 if (auxNeighbour->a == c)
@@ -756,8 +757,8 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("\tERROR @edgeFlipping [%ld : %d %d %d]\n", n, a, b, c);
-                    printf("\t[%f, %f, %f]\n",
+                    printf(LIB_STRING "\tERROR @edgeFlipping [%ld : %d %d %d]\n", n, a, b, c);
+                    printf(LIB_STRING "[%f, %f, %f]\n",
                            surfaceMesh->vertex[n].x,
                            surfaceMesh->vertex[n].y,
                            surfaceMesh->vertex[n].z);
@@ -787,7 +788,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("\tERROR @edgeFlipping: auxNeighbour->a == b && auxNeighbour->b == n\n");
+                    printf(LIB_STRING "\tERROR @edgeFlipping: auxNeighbour->a == b && auxNeighbour->b == n\n");
                 }
 
                 auxNeighbour = neighbourList[c];
@@ -812,7 +813,7 @@ void edgeFlipping(SurfaceMesh *surfaceMesh, const size_t& n, const bool& preserv
                 }
                 else
                 {
-                    printf("\tERROR @edgeFlipping: auxNeighbour->a == n && auxNeighbour->b == b\n");
+                    printf(LIB_STRING "\tERROR @edgeFlipping: auxNeighbour->a == n && auxNeighbour->b == b\n");
                 }
             }
         }
@@ -867,7 +868,7 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
             (eigenVector.x2 == 0 && eigenVector.y2 == 0 && eigenVector.z2 == 0) ||
             (eigenVector.x3 == 0 && eigenVector.y3 == 0 && eigenVector.z3 == 0))
         {
-            // printf("\t@moveVerticesAlongSurface: "
+            // printf(LIB_STRING "@moveVerticesAlongSurface: "
             //        "Old point [%0.2f, %0.2f, %0.2f] New point [%0.2f, %0.2f, %0.2f]\n",
             //        surfaceMesh->vertex[n].x, surfaceMesh->vertex[n].y, surfaceMesh->vertex[n].z,
             //        nx, ny, nz);
@@ -891,7 +892,7 @@ void moveVerticesAlongSurface(SurfaceMesh *surfaceMesh, const size_t& n)
             ny = w1 * eigenVector.y1 + w2 * eigenVector.y2 + w3 * eigenVector.y3 + y;
             nz = w1 * eigenVector.z1 + w2 * eigenVector.z2 + w3 * eigenVector.z3 + z;
 
-            // printf("\t@moveVerticesAlongSurface: "
+            // printf(LIB_STRING "@moveVerticesAlongSurface: "
             //        "Old point [%0.2f, %0.2f, %0.2f] New point [%0.2f, %0.2f, %0.2f]\n",
             //        surfaceMesh->vertex[n].x, surfaceMesh->vertex[n].y, surfaceMesh->vertex[n].z,
             //        nx, ny, nz);
@@ -952,7 +953,7 @@ void smoothNormal(SurfaceMesh *surfaceMesh, const size_t& n)
         }
         else
         {
-            printf("\tERROR @smoothNormal: auxNeighbour\n");
+            printf(LIB_STRING "\tERROR @smoothNormal: auxNeighbour\n");
         }
 
         Normal normal = computeCrossProduct(surfaceMesh, n, b, c);
@@ -1058,7 +1059,7 @@ void subdividePolygon(SurfaceMesh *surfaceMesh,
 
     if (numberIterations < 3)
     {
-        printf("\tERROR @subdividePolygon: Number of nodes less than 3!\n");
+        printf(LIB_STRING "\tERROR @subdividePolygon: Number of nodes less than 3!\n");
         return;
     }
 

@@ -29,6 +29,7 @@ project(
 add_library(gmesh
     src/simple_lib.cpp
     src/simple_lib.hpp
+    src/Common.hh
     src/Vertex.hpp
     src/Triangle.hpp
     src/EigenVector.hpp
