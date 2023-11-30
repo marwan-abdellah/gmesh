@@ -10,6 +10,8 @@ struct Base {
     };
 
     Base();
+
+    virtual ~Base();
     Value getA() const {
         return a;
     }

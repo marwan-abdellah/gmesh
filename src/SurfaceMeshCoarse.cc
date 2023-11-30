@@ -200,7 +200,6 @@ char coarse(SurfaceMesh* surfaceMesh,
                     // printf("\t @coarse: EigenValues: [%ld], "
                     //  "(%.3f, %.3f, %.3f)\n", n, eigenValue.x, eigenValue.y, eigenValue.z);
 
-
                     ratio1 = fabs((eigenValue.y)/(eigenValue.x));
                     ratio1 = pow(ratio1, flatnessRate);
                     // ratio1 = (1.0 - maxAngle) * fabs((eigenValue.y) / (eigenValue.x));
@@ -212,7 +211,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
             // Use maximal angle between vertex normal as a complementary coarse criteria
             if (maxNormalAngle > 0)
-                deleteVertex = deleteVertex && maxAngle > maxNormalAngle;
+                deleteVertex = deleteVertex && (maxAngle > maxNormalAngle);
 
             // Deleting a vertex and retrianglulate the hole
             if (deleteVertex)
@@ -238,7 +237,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                     // Get face marker
                     face_marker = surfaceMesh->face[c].marker;
 
-                    /* delete faces associated with vertex n */
+                    // Delete faces associated with vertex n
                     surfaceMesh->face[c].v1 = -1;
                     surfaceMesh->face[c].v2 = -1;
                     surfaceMesh->face[c].v3 = -1;
@@ -249,7 +248,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                     NPNT3* auxNeighbour1 = secondNeighbour;
                     while (secondNeighbour != nullptr)
                     {
-                        if (secondNeighbour->a == n || secondNeighbour->b == n)
+                        if (secondNeighbour->a == int(n) || secondNeighbour->b == int(n))
                         {
                             if (secondNeighbour == neighbourList[a])
                             {
@@ -300,7 +299,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                                  &faceAvailableIndex, face_marker);
 
                 // Order the neighbors
-                for (size_t m = 0; m < neighborNumber; m++)
+                for (int m = 0; m < neighborNumber; ++m)
                 {
                     firstNeighbour = neighbourList[neighborAuxList[m]];
                     int c = firstNeighbour->a;
@@ -350,7 +349,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                 }
 
                 // Smooth the neighbors
-                for (size_t m = 0; m < neighborNumber; m++)
+                for (int m = 0; m < neighborNumber; ++m)
                 {
                     if (!surfaceMesh->vertex[auxNumber2].selected)
                         continue;
@@ -441,7 +440,7 @@ char coarse(SurfaceMesh* surfaceMesh,
             surfaceMesh->vertex[n].y != -99999 &&
             surfaceMesh->vertex[n].z != -99999)
         {
-            if (startIndex != n)
+            if (startIndex != int(n))
             {
                 surfaceMesh->vertex[startIndex].x = surfaceMesh->vertex[n].x;
                 surfaceMesh->vertex[startIndex].y = surfaceMesh->vertex[n].y;
@@ -513,14 +512,14 @@ char coarse(SurfaceMesh* surfaceMesh,
 void coarseDense(SurfaceMesh* surfaceMesh,
                  const float& denseRate, const size_t &iterations, const bool verbose)
 {
-    for (int64_t i = 0; i < iterations; ++i)
+    for (size_t i = 0; i < iterations; ++i)
         if (!coarse(surfaceMesh, denseRate, 0, 10, -1, verbose)) break;
 }
 
 void coarseFlat(SurfaceMesh* surfaceMesh,
                  const float& flatnessRate, const size_t &iterations, const bool verbose)
 {
-    for (int64_t i = 0; i < iterations; ++i)
+    for (size_t i = 0; i < iterations; ++i)
         if (!coarse(surfaceMesh, flatnessRate, 1, 0, -1, verbose)) break;
 }
 

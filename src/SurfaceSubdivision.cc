@@ -3,15 +3,8 @@
 
 void refine(SurfaceMesh* surfaceMesh)
 {
-    // size_t localNumberEdges = 0, totalNumberEdges = 0, edgeNumber = 0;
-    // size_t min_vertex_num, max_vertex_num, faceNumber;
-    // size_t k, m, n, initialNumberVertices;
     size_t a, b, c;
-    // size_t* numberEdges;
-    // size_t* offsets;
-    // size_t* vertex2edge;
     size_t local_vertices[3], local_additional_vertices[3];
-
 
     NPNT3* ngr;
     float ax, ay, az;
@@ -44,7 +37,8 @@ void refine(SurfaceMesh* surfaceMesh)
         while (ngr != nullptr)
         {
             // If n is smaller than ngr->a we have an edge
-            if (n < ngr->a){
+            if (int(n) < ngr->a)
+            {
                 totalNumberEdges++;
                 localNumberEdges++;
             }
@@ -91,7 +85,7 @@ void refine(SurfaceMesh* surfaceMesh)
         while (ngr != nullptr)
         {
             // If n is smaller than ngr->a we have an edge
-            if (n < ngr->a)
+            if (int(n) < ngr->a)
             {
                 // Add the value of the opposite vertex to the map
                 vertex2edge[edgeNumber] = ngr->a;

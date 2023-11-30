@@ -298,7 +298,7 @@ EigenVector getEigenVector(SurfaceMesh *surfaceMesh,
     }
 
     double tx = std::max(x1, std::max(x2, x3));
-    double ty, tz;
+    double ty = 0, tz = 0;
     if (tx == x1)
     {
         if (x2 >= x3) { ty = x2; tz = x3; }
