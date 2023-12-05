@@ -39,9 +39,11 @@ char coarse(SurfaceMesh* surfaceMesh,
     char stop = 0;
 
     // If using sparseness weight, calculate the average segment length of the mesh    
-    float averageLength = 0.f;
     if (densenessWeight > 0.0)
     {
+        float* averageLengths = new float[surfaceMesh->numberFaces];
+
+#pragma omp parallel for
         for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
         {
             int a = surfaceMesh->face[n].v1;
@@ -69,40 +71,40 @@ char coarse(SurfaceMesh* surfaceMesh,
                                  (surfaceMesh->vertex[c].z - surfaceMesh->vertex[b].z) *
                                  (surfaceMesh->vertex[c].z - surfaceMesh->vertex[b].z));
 
-            averageLength += (nx + ny + nz) / 3.0f;
+            averageLengths[n] = (nx + ny + nz) / 3.0f;
+            // averageLength += (nx + ny + nz) / 3.0f;
         }
 
         if (surfaceMesh->numberFaces == 0)
         {
             printf(LIB_STRING "ERROR @coarse: Zero degree on a vertex.\n");
+            delete [] averageLengths;
             return 0;
         }
         else
         {
             float averageLength = 0.f;
+            for (size_t n = 0; n < surfaceMesh->numberFaces; n++)
+                averageLength += averageLengths[n];
 
             surfaceMesh->averageLength = averageLength / (float)(surfaceMesh->numberFaces);
+
+            delete [] averageLengths;
         }
     }
 
     float ratio1 = 1.0, ratio2 = 1.0;
     int maxLength = 0;
-    int auxNumber1, auxNumber2;
+    // int auxNumber1, auxNumber2;
     int faceAvailableList[64], faceAvailableIndex;
     int neighborAuxList[64];
 
     // The main loop over all vertices
+    bool* deleteFlags = new bool[surfaceMesh->numberVertices];
+
+#pragma omp parallel for
     for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
     {
-        // Status report
-        if (((n+1) % 888) == 0 || (n+1) == surfaceMesh->numberVertices)
-        {
-            const float percentage = 100.0 * (n + 1) / (float) surfaceMesh->numberVertices;
-            printf(LIB_STRING "Progress: %2.2f \r", percentage);
-            fflush(stdout);
-        }
-        fflush(stdout);
-
         // If the vertex have been flagged to not be removed
         if (!surfaceMesh->vertex[n].selected)
         {
@@ -115,8 +117,8 @@ char coarse(SurfaceMesh* surfaceMesh,
         while (firstNeighbour != nullptr)
         {
             int a = firstNeighbour->a;
-            auxNumber1 = 0;
-            auxNumber2 = 0;
+            int auxNumber1 = 0;
+            int auxNumber2 = 0;
 
             NPNT3* secondNeighbour = neighbourList[a];
             while (secondNeighbour != nullptr)
@@ -141,14 +143,28 @@ char coarse(SurfaceMesh* surfaceMesh,
             firstNeighbour = firstNeighbour->next;
         }
 
-        if (deleteFlag)
+        deleteFlags[n] = deleteFlag;
+    }
+
+    for (size_t n = 0; n < surfaceMesh->numberVertices; n++)
+    {
+        // Status report
+        if (((n + 1) % 888) == 0 || (n + 1) == surfaceMesh->numberVertices)
+        {
+            const float percentage = 100.0 * (n + 1) / (float) surfaceMesh->numberVertices;
+            printf(LIB_STRING "Progress: %2.2f \r", percentage);
+            fflush(stdout);
+        }
+        fflush(stdout);
+
+        if (deleteFlags[n])
         {
             float x = surfaceMesh->vertex[n].x;
             float y = surfaceMesh->vertex[n].y;
             float z = surfaceMesh->vertex[n].z;
 
             maxLength = -1;
-            firstNeighbour = neighbourList[n];
+            NPNT3* firstNeighbour = neighbourList[n];
 
             // If using sparseness as a criteria for coarsening calculate the maximal segment length
             if (densenessWeight > 0.0)
@@ -280,7 +296,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                         }
                     }
 
-                    auxNumber1 = 0;
+                    int auxNumber1 = 0;
                     secondNeighbour = neighbourList[a];
                     while (secondNeighbour != nullptr)
                     {
@@ -352,6 +368,7 @@ char coarse(SurfaceMesh* surfaceMesh,
                 }
 
                 // Smooth the neighbors
+                int auxNumber2 = 0;
                 for (int m = 0; m < neighborNumber; ++m)
                 {
                     if (!surfaceMesh->vertex[auxNumber2].selected)
@@ -436,6 +453,8 @@ char coarse(SurfaceMesh* surfaceMesh,
         // if (inputNumberVertices < MeshSizeUpperLimit) { stop = 1; break; }
     }
 
+    delete [] deleteFlags;
+
     // Clean the lists of nodes and faces
     int startIndex = 0;
     for (size_t n = 0; n < surfaceMesh->numberVertices; ++n)
@@ -509,7 +528,7 @@ char coarse(SurfaceMesh* surfaceMesh,
 
     free(vertexIndexArray);
     free(faceIndexArray);
-
+    printf("\n");
     return stop;
 }
 
@@ -526,5 +545,4 @@ void coarseFlat(SurfaceMesh* surfaceMesh,
     for (size_t i = 0; i < iterations; ++i)
         if (!coarse(surfaceMesh, flatnessRate, 1, 0, -1, verbose)) break;
 }
-
 

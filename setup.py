@@ -22,12 +22,12 @@ ext_modules = [
     # see https://docs.python.org/3/extending/building.html#building-c-and-c-extensions-with-distutils
     Extension(
         'gmesh',
-        src_files,
+        sources=src_files,
         extra_compile_args=['-fopenmp'],
         extra_link_args=['-lgomp'],
         include_dirs=[os.path.join(base_path, 'include')],
         language='c++',
-        undef_macros=["NDEBUG"],
+        # undef_macros=["NDEBUG"],
     ),
 ]
 
@@ -48,7 +48,7 @@ def has_flag(compiler, flagname):
 
 
 def cpp_flag(compiler):
-    """Return the -std=c++[11/14] compiler flag.
+    """Return the -std=c++[11/14/17] compiler flag.
 
     The c++14 is prefered over c++11 (when it is available).
     """
@@ -79,6 +79,7 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
+            opts.append('-fopenmp')
         for ext in self.extensions:
             ext.extra_compile_args = opts
         build_ext.build_extensions(self)
@@ -96,6 +97,7 @@ class PyTest(TestCommand):
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
+
 
 
 setup(

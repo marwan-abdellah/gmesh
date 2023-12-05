@@ -6,6 +6,8 @@
 #include "SurfaceMesh.hpp"
 #include "SurfaceMesh.hh"
 #include "PySurfaceMesh.hh"
+#include <omp.h>
+#include <unistd.h>
 
 namespace py = pybind11;
 
@@ -82,6 +84,30 @@ void exposeClasses(py::module m)
         ;
 }
 
+void testOMP(int j)
+{
+    int* a = new int[j];
+    int* b = new int[j];
+    int* c = new int[j];
+
+#pragma omp parallel for
+    for (int i = 0; i < j; ++i)
+    {
+        a[i] = i * 3;
+        b[i] = 2 + i;
+    }
+
+#pragma omp parallel for
+    for (int i = 0; i < j; ++i)
+    {
+        c[i] = a[i] + b[i];
+    }
+
+    delete [] a;
+    delete [] b;
+    delete [] c;
+}
+
 void exposeFunctions(py::module m)
 {
 
@@ -114,6 +140,8 @@ void exposeFunctions(py::module m)
     m.def("coarse_dense", &coarseDense);
 
     m.def("coarse_flat", &coarseFlat);
+
+    m.def("test_omp", &testOMP);
 }
 
 PYBIND11_MODULE(gmesh, m)
