@@ -35,10 +35,11 @@ bool smooth(SurfaceMesh *surfaceMesh,
     {
         printf(LIB_STRING "Angles:\n");
         printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
-               "θ < %ld, θ > %ld [%ld, %ld]\n",
+               "θ < %ld, θ > %ld [%ld, %ld]\t\r",
                i, minAngle, maxAngle,
                maxMinAngle, minaMaxAngle,
                numberSmallerAngles, numberLargerAngles);
+        fflush(stdout);
     }
 
     // Check if the mesh is smoothed or not
@@ -69,20 +70,22 @@ bool smooth(SurfaceMesh *surfaceMesh,
         if (maximumIterations != 1 && verbose)
         {
             printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
-                   "θ < %ld, θ > %ld [%ld, %ld]\n",
+                   "θ < %ld, θ > %ld [%ld, %ld]\t\r",
                    i, minAngle, maxAngle,
                    maxMinAngle, minaMaxAngle,
                    numberSmallerAngles, numberLargerAngles);
+            fflush(stdout);
         }
         else
         {
             if (verbose)
             {
                 printf(LIB_STRING "%3ld: Min θ, Max θ [%.5f, %.5f] "
-                       "θ < %ld, θ > %ld [%ld, %ld]\n",
+                       "θ < %ld, θ > %ld [%ld, %ld]\t\r",
                        i, minAngle, maxAngle,
                        maxMinAngle, minaMaxAngle,
                        numberSmallerAngles, numberLargerAngles);
+                fflush(stdout);
             }
         }
 
@@ -129,7 +132,7 @@ void smoothNormals(SurfaceMesh *surfaceMesh,
     if (verbose)
     {
         printf(LIB_STRING "Min θ, Max θ [%.5f, %.5f] "
-               "θ < %f, θ > %f [%ld, %ld]\n",
+               "θ < %f, θ > %f [%ld, %ld]\t\n",
                minAngle, maxAngle,
                maxMinAngle, minMaxAngle,
                numberSmallerAngles, numberGreaterAngles);
